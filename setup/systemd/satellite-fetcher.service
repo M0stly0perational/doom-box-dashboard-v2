@@ -1,0 +1,16 @@
+[Unit]
+Description=Satellite pass predictor for DOOM BOX dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=doombox
+ExecStart=/home/doombox/satellite-fetcher/.venv/bin/python3 /home/doombox/satellite-fetcher/fetch.py
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/doombox/.node-red/static/dashboard/data/intel /home/doombox/satellite-fetcher
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

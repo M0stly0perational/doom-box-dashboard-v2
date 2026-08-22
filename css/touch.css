@@ -1,0 +1,462 @@
+/* ============================================================
+   DOOM BOX V2 — Touch & Tablet Usability
+   Global touch improvements: active feedback, tap highlight,
+   scroll behaviour, touch targets, font floor.
+   Loaded LAST so these rules win specificity battles.
+   ============================================================ */
+
+/* ── Tap highlight — amber flash matching tactical theme ────── */
+html { -webkit-tap-highlight-color: rgba(232,181,74,0.18); }
+
+/* ── Overscroll ─────────────────────────────────────────────── */
+body { overscroll-behavior: none; }
+
+/* ── Active feedback (:active) — fast visual confirmation ───── */
+button:active,
+[role="button"]:active,
+.navitem:active,
+.home-tile:active,
+.chip:active,
+.ctl:active,
+.ctl-close:active,
+.fontctl button:active,
+.cx-flt:active,
+.cx-row:active,
+.cx-src-link:active,
+.ai-chip:active,
+.ai-btn:active,
+.ai-send:active,
+.mesh-tab:active,
+.mesh-rf:active,
+.mesh-quick button:active,
+.mesh-hbtn:active,
+.mesh-send:active,
+.mesh-d-act:active,
+.mesh-jump:active,
+.os-act:active,
+.dbm-tool:active,
+.dbm-layers-btn:active,
+.dbm-zoom button:active,
+.dbm-acc-h:active,
+.dbm-seg button:active,
+.dbm-row:active,
+.dbm-btn:active,
+.dbm-draft-btn:active,
+.med-cat:active,
+.med-tb-group button:active,
+.sig-fchip:active,
+.sig-aptoggle:active {
+  opacity: 0.6;
+  transition: opacity 0s;
+}
+
+/* ── User-select: none on chrome / non-text elements ────────── */
+button, [role="button"], .navitem, .chip, .home-tile, .ctl,
+.ctl-close, .fontctl button, .cx-flt, .cx-src-link, .ai-chip,
+.ai-btn, .ai-send, .mesh-tab, .mesh-rf, .mesh-quick button,
+.mesh-hbtn, .mesh-send, .dbm-tool, .dbm-layers-btn,
+.dbm-seg button, .dbm-acc-h, .dbm-btn, .dbm-draft-btn {
+  user-select: none;
+}
+
+/* ── Scrollable containers: touch-action + overscroll ────────── */
+.os-feed, .cx-list-body, .cx-detail, .ai-chat,
+.mesh-chatlog, .mesh-node-list, .dbm-layers-panel,
+.dbm-anno-list, #content>.sys {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   TOPBAR CONTROLS — raise all chrome elements to 44 px minimum
+   ──────────────────────────────────────────────────────────────── */
+.ctl {
+  min-height: 44px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.ctl-close {
+  width: 44px !important;
+  height: 44px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fontctl button {
+  min-height: 44px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fontctl .pct {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Chips are tappable (home-live.js navigates on click) */
+.chip {
+  min-height: 36px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .7rem;
+}
+/* Ticker pause: JS adds .paused on touchstart; :hover still works for mouse */
+.ticker.paused .ticker-track { animation-play-state: paused; }
+
+/* ────────────────────────────────────────────────────────────────
+   MAP TAB — toolbar, zoom, search, layer controls
+   ──────────────────────────────────────────────────────────────── */
+.dbm-tool {
+  width: 44px !important;
+  height: 44px !important;
+  margin: 0 auto;
+}
+.dbm-tool svg { width: 20px; height: 20px; }
+.dbm-zoom { width: 44px; }
+.dbm-zoom button { height: 44px; }
+.dbm-compass { width: 44px; height: 44px; }
+.dbm-search { height: 44px; }
+.dbm-search .s-ic { width: 44px; }
+.dbm-layers-btn { height: 44px; }
+.dbm-acc-h { min-height: 44px; padding: 0 14px; display: flex; align-items: center; }
+.dbm-seg button { min-height: 44px; }
+.dbm-row { min-height: 40px; display: flex; align-items: center; }
+
+/* Drawing DONE/CANCEL overlay — shown when a draft is active */
+.dbm-draft-actions {
+  display: none;
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  gap: 12px;
+  flex-direction: row;
+}
+.dbm-draft-actions.visible { display: flex; }
+.dbm-draft-btn {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  padding: 0 24px;
+  height: 50px;
+  border: none;
+  cursor: pointer;
+  min-width: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.65);
+}
+.dbm-draft-btn.done {
+  background: var(--accent, #E8B54A);
+  color: #12121E;
+}
+.dbm-draft-btn.cancel {
+  background: rgba(18,18,30,0.97);
+  color: var(--text-2, #8898AA);
+  border: 1px solid rgba(136,152,170,0.3);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   CONFLICT TAB — font size floor + filter button touch targets
+   ──────────────────────────────────────────────────────────────── */
+.cx-stat-label { font-size: 10px; }
+.cx-header-sub { font-size: 10px; }
+.cx-list-meta  { font-size: 10px; }
+.cx-row-date   { font-size: 10px; }
+.cx-row-sev    { font-size: 10px; }
+.cx-sev-badge  { font-size: 10px; }
+.cx-mk         { font-size: 10px; }
+.cx-section-head { font-size: 10px; }
+.cx-ev-sub     { font-size: 11px; }
+
+.cx-flt {
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+}
+.cx-search { height: 44px; padding: 0 10px; font-size: 13px; }
+.cx-src-link {
+  min-height: 44px;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   AI TAB — button and chip touch targets
+   ──────────────────────────────────────────────────────────────── */
+.ai-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  font-size: .66rem;
+}
+.ai-chip {
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  font-size: .66rem;
+}
+.ai-send { min-height: 50px; padding: 0 24px; font-size: .72rem; }
+.ai-modelsel .cur { min-height: 44px; }
+.ai-modeldrop .opt { min-height: 44px; padding: 0 14px; display: flex; align-items: center; }
+
+/* ────────────────────────────────────────────────────────────────
+   MESH TAB — quick-action buttons, tabs, chat controls
+   ──────────────────────────────────────────────────────────────── */
+.mesh-tab {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+}
+/* Quick-action buttons: always show, larger touch target with visible label */
+.mesh-quick button {
+  width: 52px !important;
+  height: 52px !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: .9rem !important;
+}
+/* Label under emoji in quick-action buttons */
+.mesh-quick button .ql {
+  display: block;
+  font-family: var(--font-mono, monospace);
+  font-size: 8px;
+  letter-spacing: .08em;
+  line-height: 1;
+  opacity: .75;
+  pointer-events: none;
+}
+/* Node action buttons: show on touch devices always-visible below node */
+.mesh-node .acts {
+  display: flex !important;  /* always visible — no hover required */
+  flex-wrap: wrap;
+}
+.mesh-node .acts button {
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: .6rem;
+}
+.mesh-hbtn { min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; }
+.mesh-send { min-height: 50px; padding: 0 18px; }
+.mesh-rf { min-height: 38px; padding: 0 12px; display: inline-flex; align-items: center; }
+.mesh-chsel { min-height: 44px; padding: 0 10px; }
+.mesh-msg { min-height: 50px; font-size: .8rem; }
+.mesh-jump { min-height: 36px; }
+.mesh-d-act { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.mesh-d-close { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+
+/* ────────────────────────────────────────────────────────────────
+   SYS TAB — font size floor
+   ──────────────────────────────────────────────────────────────── */
+.sys-h { font-size: .64rem; }
+.sys-badge { font-size: .58rem; padding: 4px 10px; min-height: 28px; }
+.sys-kv { font-size: .7rem; }
+
+/* ────────────────────────────────────────────────────────────────
+   GLOBAL font minimums (any text users must read at arm's length)
+   ──────────────────────────────────────────────────────────────── */
+.clock .date { font-size: .66rem !important; }
+.coord .lbl  { font-size: .72rem; }
+
+/* ── Range sliders ───────────────────────────────────────────── */
+input[type="range"] { height: 24px; cursor: pointer; touch-action: none; }
+
+/* ── OSINT tab action buttons ────────────────────────────────── */
+.os-act { min-height: 40px; padding: 0 14px; display: inline-flex; align-items: center; }
+
+/* ── OSINT sort / view segment buttons + mark-all ────────────── */
+.os-seg button {
+  min-height: 40px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+}
+.os-markall {
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+}
+/* OSINT category refresh button: small visual, expanded tap area */
+.rb {
+  padding: 8px !important;
+  min-width: 36px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── WX tab: metar toggle, sub-tabs, alert action buttons ────── */
+.wx-metar-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+}
+.wx-tab {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+}
+.wx-aact {
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── ADS-B filter chips ──────────────────────────────────────── */
+.ab-fchip {
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── MESH: channel button, filter pills, sort selector ──────── */
+.mesh-addch {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+}
+.mesh-rf {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.mesh-rsort { min-height: 40px; }
+.alertbtn {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+}
+/* Dialog / settings confirm buttons */
+button.amber,
+.mesh-settings button {
+  min-height: 44px;
+  padding: 0 16px;
+}
+/* Small close (✕) button in MESH dialogs */
+button.x {
+  min-height: 40px;
+  min-width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   TABLET TOPBAR — trade fontctl + brand text for status chips
+   At ≤1024px the brand word and font-size controls are redundant
+   (tablets use OS pinch-to-zoom). Freeing that space lets us show
+   the live status chips (GPS / NET / RF / AI / BATT) that were
+   hidden via the original @media (max-width:1024px) rule.
+   ──────────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  /* Hide font-size controls (tablets have OS pinch-to-zoom) */
+  .fontctl { display: none !important; }
+
+  /* Hide brand name text — keep just the DB logo glyph */
+  .brand .word, .brand .cursor { display: none !important; }
+
+  /* Hide clock date line; shrink clock font slightly */
+  .clock .date { display: none !important; }
+  .clock .z { font-size: .78rem; }
+
+  /* Hide the DARK/LIGHT mode label text; show only the color swatch */
+  #modeLbl { display: none !important; }
+
+  /* Show chips now that space is freed */
+  .chips {
+    display: flex !important;
+    gap: 3px;
+    padding: 0 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  /* Compact chip style — dot + value only, no key label */
+  .chip {
+    padding: 3px 6px;
+    gap: 3px;
+    font-size: .56rem;
+    flex-shrink: 0;
+  }
+  .chip .k { display: none; }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   HOME intel-grid — on tablet portrait the 3 cards stack; give
+   each card a max-height so users can see all 3 above the fold.
+   ──────────────────────────────────────────────────────────────── */
+@media (max-width: 980px) {
+  .intel-grid { gap: 10px; }
+  .icard-list { max-height: 180px; overflow-y: auto; }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   LANDSCAPE TABLET (e.g. 1024×768) — restore 3-col intel-grid
+   ──────────────────────────────────────────────────────────────── */
+@media (max-width: 980px) and (orientation: landscape) {
+  .intel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .icard-list { max-height: 220px; }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   MEDIA TAB — category chips, grid/list toggle, sort/type selects
+   ──────────────────────────────────────────────────────────────── */
+.med-cat {
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+}
+.med-tb-group button {
+  min-height: 40px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+}
+.med-select { min-height: 40px; padding: 0 8px; }
+.med-libsearch input { min-height: 40px; padding: 0 12px; }
+
+/* ────────────────────────────────────────────────────────────────
+   SIGINT TAB — filter chips, search, AP toggle
+   ──────────────────────────────────────────────────────────────── */
+.sig-fchip {
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+}
+.sig-search { min-height: 40px; padding: 0 12px; }
+.sig-aptoggle {
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+}

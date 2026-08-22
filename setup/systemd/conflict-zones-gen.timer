@@ -1,0 +1,11 @@
+[Unit]
+Description=Regenerate conflict zone polygons every 15 min (after GDELT fetch)
+After=gdelt-fetcher.timer
+
+[Timer]
+OnCalendar=*:0/15
+RandomizedDelaySec=120
+Persistent=true
+
+[Install]
+WantedBy=timers.target

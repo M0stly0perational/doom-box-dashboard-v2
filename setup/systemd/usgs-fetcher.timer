@@ -1,0 +1,11 @@
+[Unit]
+Description=USGS earthquake fetcher timer — every 10 minutes
+Requires=usgs-fetcher.service
+
+[Timer]
+OnCalendar=*:0/10
+RandomizedDelaySec=20
+Persistent=true
+
+[Install]
+WantedBy=timers.target

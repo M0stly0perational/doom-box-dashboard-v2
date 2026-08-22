@@ -1,0 +1,20 @@
+[Unit]
+Description=OFFGRID-BASE POI fetcher (OSM Overpass + FEMA NFHL)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=doombox
+Group=doombox
+WorkingDirectory=/home/doombox/poi-fetcher
+ExecStart=/home/doombox/poi-fetcher/.venv/bin/python /home/doombox/poi-fetcher/fetch.py
+TimeoutStartSec=900
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/doombox/.node-red/static/dashboard/data/poi /home/doombox/poi-fetcher
+PrivateTmp=true
+NoNewPrivileges=true

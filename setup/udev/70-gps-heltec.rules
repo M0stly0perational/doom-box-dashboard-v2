@@ -1,0 +1,9 @@
+# GlobalSat BU-353N5 GPS puck (Prolific PL2303 USB-serial bridge, serial
+# CBAOb115819) -> stable symlink, ignored by ModemManager.
+# Replaces the earlier u-blox 7 receiver (idVendor:idProduct 1546:01a7),
+# which was removed after being diagnosed hardware-blocked (zero signal,
+# see CLAUDE.md 2026-08-02 session) -- superseded 2026-08-05.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="23a3", ATTRS{serial}=="CBAOb115819", SYMLINK+="gps0", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+# Heltec V4 (Espressif USB JTAG/serial) -> stable symlink, ignored by ModemManager
+SUBSYSTEM=="tty", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1001", SYMLINK+="heltec0", ENV{ID_MM_DEVICE_IGNORE}="1"

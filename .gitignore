@@ -1,0 +1,33 @@
+# Working notes — not a deliverable, must not ship to the public repo
+CLAUDE.md
+
+# Session-tracking scratch from planning/dev-loop tooling (local only)
+.superpowers/
+
+# Secrets / local environment overrides — .env.example is the only one that ships
+.env
+.env.*
+!.env.example
+
+# Per-tab integration rollback artifacts (local only)
+*.mock.*
+*.orig.*
+*.bak.*
+*.bak
+
+# Map tile archives
+*.pmtiles
+
+# Python cache
+__pycache__/
+
+# Logs
+*.log
+logs/
+
+# Node modules
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db

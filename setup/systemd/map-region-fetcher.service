@@ -1,0 +1,36 @@
+[Unit]
+Description=OFFGRID-BASE map-region-fetcher (pmtiles download supervisor)
+Documentation=file:///home/doombox/CLAUDE.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=doombox
+Group=doombox
+ExecStart=/usr/local/sbin/map-region-fetcher
+Restart=on-failure
+RestartSec=3s
+Nice=10
+
+# tmpfs runtime dir owned by doombox:doombox.
+RuntimeDirectory=maps
+RuntimeDirectoryMode=0755
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+ReadWritePaths=/run/maps /home/doombox/.node-red/static/dashboard/maps /home/doombox/.node-red/static/dashboard/data/maps /media/sandisk/maps
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

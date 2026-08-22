@@ -1,0 +1,11 @@
+[Unit]
+Description=GDELT event fetcher timer — every 15 minutes
+Requires=gdelt-fetcher.service
+
+[Timer]
+OnCalendar=*:0/15
+RandomizedDelaySec=30
+Persistent=true
+
+[Install]
+WantedBy=timers.target

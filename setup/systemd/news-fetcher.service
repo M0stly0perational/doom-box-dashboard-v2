@@ -1,0 +1,13 @@
+[Unit]
+Description=Fetch local news + NWS alerts
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=doombox
+Group=doombox
+ExecStart=/home/doombox/news-fetcher/.venv/bin/python /home/doombox/news-fetcher/fetch.py
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=180

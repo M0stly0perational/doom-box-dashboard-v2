@@ -1,0 +1,133 @@
+/* ============================================================
+   DOOM BOX V2 — Design Tokens
+   Single source of truth for color / type / spacing / radii /
+   elevation / touch-target sizing across all dashboard-v2 tabs.
+
+   Provenance: values here are NOT invented — they were picked by
+   surveying what's already most-used across the 10 tab CSS files
+   (map/osint/wx/adsb/conflict/mesh/sigint/media/ai/sys) plus the
+   shell's inline <style> in index.html, per the 2026-08-20 visual
+   audit. Adopting these later should be a near-zero-diff swap of
+   ad hoc values for the matching token, not a redesign.
+
+   STATUS: this file is NOT yet <link>ed into index.html and no
+   tab has been migrated to consume it. It exists as the mandatory
+   reference for all NEW UI work — see CLAUDE.md §7.6.
+   ============================================================ */
+
+:root{
+  /* ---------------------------------------------------------
+     COLOR — dark-first, high-contrast for direct-sunlight use.
+     Mirrors index.html's live :root exactly (same hex/rgba) so
+     this file can be dropped in without changing any pixel.
+     --------------------------------------------------------- */
+  --bg-primary:   #12121E;   /* app background */
+  --bg-secondary: #1A1A2E;   /* panel / topbar / ticker background */
+  --bg-card:      #0C1018;   /* recessed card / input background (darkest) */
+  --accent:       #E8B54A;   /* amber — brand, primary interactive color */
+  --text-1:       #FFFFFF;   /* primary text — max contrast for sunlight */
+  --text-2:       #8898AA;   /* secondary / muted text */
+  --green:        #5DD87A;   /* success / online / friendly */
+  --blue:         #5EB8E8;   /* info / neutral-affiliation */
+  --orange:       #CC5511;   /* warning / crime-orange */
+  --purple:       #B08CF0;   /* AI / SIGINT accent */
+  --red:          #EE4444;   /* danger / hostile / alert */
+  --line:         rgba(232,181,74,0.14);  /* amber hairline (panel borders) */
+  --line-soft:    rgba(136,152,170,0.16); /* neutral hairline (dividers) */
+
+  /* Severity ramp (matches the WX alert classes EXTREME/SEVERE/
+     MODERATE/MINOR/ADVISORY — the clearest existing 5-step scale).
+     Use these instead of hardcoding hex per tab (OSINT/WX/ADS-B
+     each currently duplicate a version of this ramp as raw hex). */
+  --sev-extreme:  #C00000;
+  --sev-severe:   var(--orange);   /* #CC5511 — already token-backed */
+  --sev-moderate: var(--accent);   /* #E8B54A — already token-backed */
+  --sev-minor:    #F2D04A;
+  --sev-advisory: #595959;
+
+  /* Hazard/intel ramp — the ColorBrewer-style 3-step scale already
+     used for CONFLICT's stat chips and the MAP GLOBAL INTEL layers
+     (GDELT/USGS/GDACS). Distinct from --sev-* by design: this ramp
+     is for external-event magnitude, not NWS alert severity. */
+  --intel-high: #d73027;
+  --intel-med:  #f46d43;
+  --intel-low:  #fee090;
+
+  /* ---------------------------------------------------------
+     TYPE SCALE — rem-based (respects the shell's A-/A+ --scale
+     control). Each step below is a value that already appears
+     verbatim, repeatedly, in the existing tab CSS.
+     --------------------------------------------------------- */
+  --font-mono: 'JetBrains Mono','SF Mono',ui-monospace,Menlo,Consolas,'Liberation Mono',monospace;
+  --font-ui:   Arial,'Helvetica Neue',Helvetica,sans-serif;
+
+  --fw-regular: 400;
+  --fw-bold:    700;
+  /* Only these two weights are sanctioned. (One outlier, 600, was
+     found in CONFLICT — do not repeat it; it doesn't match the
+     bundled font-ui's available weights consistently across tabs.) */
+
+  --fs-2xs:  0.56rem;  /* micro labels, letter-spaced captions */
+  --fs-xs:   0.62rem;  /* secondary meta text, small buttons */
+  --fs-sm:   0.68rem;  /* dense table / mono data cells */
+  --fs-base: 0.74rem;  /* default UI body text */
+  --fs-md:   0.82rem;  /* card headlines, emphasized rows */
+  --fs-lg:   0.92rem;  /* section titles, prominent labels */
+  --fs-xl:   1.1rem;   /* card headers, medium readouts */
+  --fs-2xl:  1.5rem;   /* stat numbers (matches OSINT .os-rtitle exactly) */
+  --fs-3xl:  2.7rem;   /* hero numeric readouts (battery %, temp — exact match) */
+  --fs-display: clamp(1.8rem, 3.5vw, 2.8rem);  /* sub-hero (matches .hh-title) */
+  --fs-hero:    clamp(2.4rem, 7vw, 4.6rem);    /* hero (matches .ph-name) */
+
+  /* ---------------------------------------------------------
+     SPACING SCALE — px. Snap new padding/margin/gap values to
+     this scale instead of picking arbitrary integers.
+     --------------------------------------------------------- */
+  --space-1:  4px;
+  --space-2:  6px;
+  --space-3:  8px;
+  --space-4:  10px;
+  --space-5:  12px;
+  --space-6:  14px;
+  --space-7:  16px;
+  --space-8:  18px;
+  --space-9:  22px;
+  --space-10: 28px;
+  --space-11: 36px;
+
+  /* ---------------------------------------------------------
+     RADII — the app is deliberately square/tactical. Only two
+     values exist anywhere in the codebase: sharp corners and
+     full circles. Do not add an intermediate radius token.
+     --------------------------------------------------------- */
+  --radius-none: 0;
+  --radius-full: 9999px;   /* status dots, spinners, avatars */
+
+  /* ---------------------------------------------------------
+     ELEVATION — the few box-shadow patterns already in use,
+     consolidated into a 2-level scale plus one accent glow.
+     --------------------------------------------------------- */
+  --elev-0: none;
+  --elev-1: 0 4px 18px rgba(0,0,0,0.50);   /* popups, dropdowns, tooltips */
+  --elev-2: 0 8px 22px rgba(0,0,0,0.55);   /* modals, flyout panels */
+  --glow-accent: 0 0 10px rgba(232,181,74,0.35);  /* focus / active-state glow */
+
+  /* ---------------------------------------------------------
+     TOUCH TARGETS — mandatory minimum for any new interactive
+     element (button, checkbox, chip, row action, icon button).
+     --------------------------------------------------------- */
+  --touch-target-min: 44px;
+}
+
+/* "Dim" mode — a lighter, higher-ambient-light variant of the
+   same palette (mirrors index.html's html[data-mode="dim"]).
+   Included here so this file stays a complete, correct source
+   of truth for both modes if/when it's wired into the shell. */
+html[data-mode="dim"]{
+  --bg-primary:   #20202F;
+  --bg-secondary: #2A2A40;
+  --bg-card:      #161D29;
+  --text-2:       #9AAAC0;
+  --line:         rgba(232,181,74,0.20);
+  --line-soft:    rgba(154,170,192,0.20);
+}

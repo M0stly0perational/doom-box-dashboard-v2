@@ -1,0 +1,12 @@
+[Unit]
+Description=Conflict zone polygon + battle-line generator from GDELT cache
+After=network.target
+
+[Service]
+Type=oneshot
+User=doombox
+ExecStart=/usr/bin/python3 /home/doombox/conflict-zones-gen/gen.py
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/doombox/.node-red/static/dashboard/data/intel
+NoNewPrivileges=true

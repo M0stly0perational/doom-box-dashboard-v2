@@ -1,0 +1,11 @@
+[Unit]
+Description=FAA TFR fetcher timer — every 15 minutes
+Requires=tfr-fetcher.service
+
+[Timer]
+OnCalendar=*:0/15
+RandomizedDelaySec=45
+Persistent=true
+
+[Install]
+WantedBy=timers.target

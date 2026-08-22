@@ -1,0 +1,11 @@
+[Unit]
+Description=Run OFFGRID-BASE POI fetcher weekly
+
+[Timer]
+OnCalendar=Wed *-*-* 03:00:00
+RandomizedDelaySec=21600
+Persistent=true
+Unit=poi-fetcher.service
+
+[Install]
+WantedBy=timers.target

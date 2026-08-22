@@ -1,0 +1,16 @@
+[Unit]
+Description=GDACS disaster alert fetcher for DOOM BOX dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=doombox
+ExecStart=/usr/bin/python3 /home/doombox/gdacs-fetcher/fetch.py
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/doombox/.node-red/static/dashboard/data/intel /home/doombox/gdacs-fetcher
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

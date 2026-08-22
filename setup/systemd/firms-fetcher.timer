@@ -1,0 +1,11 @@
+[Unit]
+Description=NASA FIRMS fire detection fetcher timer — hourly
+Requires=firms-fetcher.service
+
+[Timer]
+OnCalendar=*-*-* *:00:00
+RandomizedDelaySec=90
+Persistent=true
+
+[Install]
+WantedBy=timers.target

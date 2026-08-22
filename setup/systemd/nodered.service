@@ -1,0 +1,16 @@
+[Unit]
+Description=Node-RED
+After=network.target freetakserver.service
+
+[Service]
+[Service]
+Type=simple
+User=doombox
+WorkingDirectory=/home/doombox
+ExecStartPre=/bin/sleep 15
+ExecStart=/usr/bin/node-red
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

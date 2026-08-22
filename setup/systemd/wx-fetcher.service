@@ -1,0 +1,20 @@
+[Unit]
+Description=OFFGRID-BASE wx-fetcher (NWS active alerts + observations + forecast)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=doombox
+Group=doombox
+WorkingDirectory=/home/doombox/wx-fetcher
+ExecStart=/home/doombox/wx-fetcher/.venv/bin/python /home/doombox/wx-fetcher/fetch.py
+TimeoutStartSec=120
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/doombox/.node-red/static/dashboard/data/wx /home/doombox/wx-fetcher
+PrivateTmp=true
+NoNewPrivileges=true

@@ -1,0 +1,11 @@
+[Unit]
+Description=15-minute news + alerts refresh
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=15min
+RandomizedDelaySec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

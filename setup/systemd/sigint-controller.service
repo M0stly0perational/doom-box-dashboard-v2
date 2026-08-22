@@ -1,0 +1,45 @@
+[Unit]
+Description=OFFGRID-BASE SIGINT controller (wlan1 mode toggle + passive capture)
+Documentation=file:///home/doombox/CLAUDE.md
+After=network-online.target hostapd.service
+Wants=network-online.target
+# Disabled-at-boot for v1: same posture as radio-supervisor. Operator starts
+# this service manually when they want to toggle into monitor mode.
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/local/sbin/sigint-controller
+Restart=on-failure
+RestartSec=3s
+
+# Privileges: needs CAP_NET_ADMIN for ip/iw, CAP_NET_RAW for dumpcap (step 7+).
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_DAC_READ_SEARCH CAP_SYS_PTRACE
+
+# tmpfs runtime dir owned by root, 0755, persists for the service lifetime.
+RuntimeDirectory=sigint
+RuntimeDirectoryMode=0755
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_PACKET AF_INET
+RestrictNamespaces=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+ReadWritePaths=/var/lib/sigint /run/sigint
+PrivateTmp=true
+
+# Defaults — override with drop-in if needed for testing.
+# Environment=SIGINT_AUTO_REVERT_S=60
+# Environment=SIGINT_DRY_RUN=1
+
+[Install]
+WantedBy=multi-user.target

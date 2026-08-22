@@ -1,0 +1,11 @@
+[Unit]
+Description=Run OFFGRID-BASE wx-fetcher every 5 minutes
+
+[Timer]
+OnCalendar=*:0/5
+RandomizedDelaySec=30
+Persistent=true
+Unit=wx-fetcher.service
+
+[Install]
+WantedBy=timers.target

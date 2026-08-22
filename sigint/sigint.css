@@ -1,0 +1,178 @@
+/* ============================================================
+   DOOM BOX — SIGINT MODULE
+   Passive WiFi capture console. Reuses shell tokens.
+   ============================================================ */
+#content>.sig{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg-primary);font-family:var(--font-ui);overflow:hidden;}
+.sig-brk{--bk:var(--accent);--bt:1px;--bl:12px;background:
+   linear-gradient(var(--bk),var(--bk)) no-repeat 0 0/var(--bl) var(--bt),
+   linear-gradient(var(--bk),var(--bk)) no-repeat 0 0/var(--bt) var(--bl),
+   linear-gradient(var(--bk),var(--bk)) no-repeat 100% 0/var(--bl) var(--bt),
+   linear-gradient(var(--bk),var(--bk)) no-repeat 100% 0/var(--bt) var(--bl),
+   linear-gradient(var(--bk),var(--bk)) no-repeat 0 100%/var(--bl) var(--bt),
+   linear-gradient(var(--bk),var(--bk)) no-repeat 0 100%/var(--bt) var(--bl),
+   linear-gradient(var(--bk),var(--bk)) no-repeat 100% 100%/var(--bl) var(--bt),
+   linear-gradient(var(--bk),var(--bk)) no-repeat 100% 100%/var(--bt) var(--bl);}
+.sig-sec-h{font-family:var(--font-ui);font-weight:700;letter-spacing:.14em;color:var(--accent);font-size:.62rem;}
+
+/* ---------- TOP CONTROL BAR ---------- */
+.sig-ctrl{flex:0 0 auto;display:flex;align-items:stretch;gap:0;background:var(--bg-secondary);border-bottom:1px solid var(--line);}
+.sig-mode-wrap{display:flex;align-items:center;gap:14px;padding:14px 18px;border-right:1px solid var(--line-soft);}
+.sig-mode{position:relative;display:flex;align-items:center;gap:12px;background:var(--bg-card);border:2px solid var(--green);
+  padding:10px 18px;cursor:pointer;min-width:230px;transition:.2s;}
+.sig-mode .ind{width:14px;height:14px;border-radius:50%;background:var(--green);flex:0 0 auto;box-shadow:0 0 10px rgba(93,216,122,.6);}
+.sig-mode .txt{display:flex;flex-direction:column;}
+.sig-mode .txt .big{font-family:var(--font-ui);font-weight:700;letter-spacing:.1em;font-size:.92rem;color:var(--green);line-height:1.1;}
+.sig-mode .txt .sub{font-family:var(--font-mono);font-size:.54rem;color:var(--text-2);letter-spacing:.04em;margin-top:2px;}
+.sig-mode .swap{margin-left:auto;font-family:var(--font-mono);font-size:.86rem;color:var(--text-2);}
+.sig-mode.monitor{border-color:var(--red);animation:sigpulse 1.6s ease-in-out infinite;}
+.sig-mode.monitor .ind{background:var(--red);box-shadow:0 0 10px rgba(238,68,68,.7);}
+.sig-mode.monitor .txt .big{color:var(--red);}
+@keyframes sigpulse{0%,100%{box-shadow:0 0 0 0 rgba(238,68,68,0);}50%{box-shadow:0 0 0 4px rgba(238,68,68,.28);}}
+
+.sig-hop{display:flex;flex-direction:column;justify-content:center;padding:0 18px;border-right:1px solid var(--line-soft);min-width:150px;}
+.sig-hop .lbl{font-family:var(--font-ui);font-weight:700;font-size:.52rem;letter-spacing:.12em;color:var(--text-2);}
+.sig-hop .ch{font-family:var(--font-mono);font-size:1.15rem;color:var(--accent);margin-top:3px;letter-spacing:.03em;}
+.sig-hop .band{font-family:var(--font-mono);font-size:.56rem;color:var(--text-2);}
+.sig-hop .plan{display:flex;gap:2px;margin-top:5px;}
+.sig-hop .plan i{width:7px;height:5px;background:var(--bg-card);border:1px solid var(--line-soft);}
+.sig-hop .plan i.on{background:var(--accent);border-color:var(--accent);}
+
+.sig-revert{display:flex;flex-direction:column;justify-content:center;padding:0 18px;border-right:1px solid var(--line-soft);min-width:150px;}
+.sig-revert.hidden{display:none;}
+.sig-revert .lbl{font-family:var(--font-ui);font-weight:700;font-size:.52rem;letter-spacing:.12em;color:var(--red);}
+.sig-revert .time{font-family:var(--font-mono);font-size:1.5rem;color:var(--red);line-height:1.05;margin-top:2px;letter-spacing:.04em;}
+.sig-revert .note{font-family:var(--font-mono);font-size:.5rem;color:var(--text-2);}
+
+.sig-oui{display:flex;flex-direction:column;justify-content:center;padding:0 18px;margin-left:auto;text-align:right;}
+.sig-oui .v{font-family:var(--font-mono);font-size:.74rem;color:var(--text-1);}
+.sig-oui .l{font-family:var(--font-mono);font-size:.52rem;color:var(--text-2);letter-spacing:.04em;}
+.sig-oui .ctl{font-family:var(--font-ui);font-weight:700;font-size:.52rem;letter-spacing:.1em;color:var(--green);margin-top:4px;}
+
+/* ---------- BODY (table + side panel) ---------- */
+.sig-body{flex:1;display:flex;min-height:0;}
+.sig-main{flex:1;min-width:0;display:flex;flex-direction:column;padding:14px;}
+
+/* filter bar */
+.sig-filters{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.sig-fchip{background:transparent;border:1px solid var(--line-soft);color:var(--text-2);font-family:var(--font-mono);font-size:.58rem;letter-spacing:.05em;padding:6px 11px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.sig-fchip.on{background:var(--accent);color:#12121E;border-color:var(--accent);}
+.sig-fchip .dt{width:7px;height:7px;border-radius:50%;flex:0 0 auto;}
+.sig-fchip.on .dt{display:none;}
+.sig-search{flex:1;min-width:160px;background:var(--bg-card);border:1px solid var(--line-soft);color:var(--text-1);font-family:var(--font-mono);font-size:.64rem;padding:7px 10px;outline:none;}
+.sig-search:focus{border-color:var(--accent);}
+.sig-aptoggle{background:transparent;border:1px solid var(--line-soft);color:var(--text-2);font-family:var(--font-mono);font-size:.56rem;letter-spacing:.06em;padding:7px 11px;cursor:pointer;}
+.sig-aptoggle:hover,.sig-aptoggle.on{color:var(--accent);border-color:var(--accent);}
+
+/* table */
+.sig-tablewrap{flex:1;overflow:auto;border:1px solid var(--line);padding:1px;position:relative;}
+.sig-tablewrap::-webkit-scrollbar{width:9px;height:9px;}
+.sig-tablewrap::-webkit-scrollbar-thumb{background:var(--line-soft);}
+.sig-table{width:100%;border-collapse:collapse;font-family:var(--font-ui);}
+.sig-table thead th{position:sticky;top:0;background:var(--bg-secondary);z-index:2;text-align:left;
+  font-family:var(--font-ui);font-weight:700;font-size:.56rem;letter-spacing:.1em;color:var(--text-2);
+  padding:10px 10px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none;}
+.sig-table thead th:hover{color:var(--text-1);}
+.sig-table thead th.sorted{color:var(--accent);}
+.sig-table thead th .ar{font-size:.6rem;margin-left:3px;}
+.sig-table tbody tr{border-bottom:1px solid rgba(136,152,170,0.07);cursor:pointer;border-left:3px solid transparent;}
+.sig-table tbody tr:nth-child(odd){background:var(--bg-primary);}
+.sig-table tbody tr:nth-child(even){background:rgba(26,26,46,0.4);}
+.sig-table tbody tr:hover{background:var(--bg-secondary);}
+.sig-table tbody tr.cls-unknown{border-left-color:var(--red);}
+.sig-table tbody tr.cls-random{border-left-color:var(--accent);}
+.sig-table tbody tr.cls-known{border-left-color:var(--green);}
+.sig-table tbody tr.sel{background:var(--bg-secondary);outline:1px solid var(--line);}
+.sig-table td{padding:9px 10px;font-size:.7rem;color:var(--text-1);vertical-align:middle;}
+.sig-table td.mono{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.02em;}
+.sig-table td.dim{color:var(--text-2);font-family:var(--font-mono);font-size:.62rem;}
+.sig-rssi-val{font-family:var(--font-mono);font-size:.68rem;}
+.sig-spark{width:74px;height:22px;display:block;}
+
+.sig-badge{display:inline-block;font-family:var(--font-ui);font-weight:700;font-size:.52rem;letter-spacing:.06em;padding:3px 8px;white-space:nowrap;}
+.b-known{background:rgba(93,216,122,.16);color:var(--green);}
+.b-random{background:rgba(232,181,74,.16);color:var(--accent);}
+.b-unknown{background:rgba(238,68,68,.16);color:var(--red);}
+.b-active{background:rgba(93,216,122,.16);color:var(--green);}
+.b-stale{background:rgba(136,152,170,.16);color:var(--text-2);}
+.b-gone{background:rgba(136,152,170,.1);color:var(--text-2);opacity:.7;}
+
+/* expanded detail row */
+.sig-detail td{padding:0;border-left:3px solid var(--accent);background:#0C1018 !important;}
+.sig-detail-inner{padding:16px 18px;display:grid;grid-template-columns:1.1fr 1fr;gap:18px;}
+.sig-dcol h4{font-family:var(--font-ui);font-weight:700;font-size:.58rem;letter-spacing:.14em;color:var(--accent);margin-bottom:9px;}
+.sig-dfield{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-family:var(--font-mono);font-size:.64rem;margin-bottom:12px;}
+.sig-dfield .k{color:var(--text-2);}
+.sig-dfield .v{color:var(--text-1);text-align:left;}
+.sig-probes{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.sig-probe{font-family:var(--font-mono);font-size:.58rem;color:var(--blue);border:1px solid rgba(94,184,232,.3);background:rgba(94,184,232,.07);padding:3px 8px;}
+.sig-probe.hidden-ssid{color:var(--text-2);border-color:var(--line-soft);background:transparent;}
+.sig-poflag{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:.6rem;color:var(--purple);border:1px solid rgba(176,140,240,.35);background:rgba(176,140,240,.08);padding:5px 10px;margin-bottom:12px;}
+.sig-bigchart{width:100%;height:120px;display:block;background:#0A0A14;border:1px solid var(--line-soft);}
+.sig-dactions{display:flex;gap:8px;margin-top:14px;}
+.sig-dbtn{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.06em;padding:8px 14px;cursor:pointer;border:1px solid var(--line-soft);background:transparent;color:var(--text-2);}
+.sig-dbtn:hover{color:var(--accent);border-color:var(--accent);}
+.sig-dbtn.green{color:var(--green);border-color:rgba(93,216,122,.4);}
+.sig-dbtn.green:hover{border-color:var(--green);}
+.sig-dbtn.amber{color:var(--accent);border-color:var(--accent);}
+
+/* ---------- SIDE PANEL — DETECTED APs ---------- */
+.sig-side{width:320px;flex:0 0 320px;background:var(--bg-secondary);border-left:1px solid var(--line);display:flex;flex-direction:column;transition:margin-right .2s ease;}
+.sig-side.collapsed{margin-right:-320px;}
+.sig-side-h{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-bottom:1px solid var(--line-soft);}
+.sig-side-h .x{background:none;border:none;color:var(--text-2);font-family:var(--font-mono);cursor:pointer;font-size:.9rem;}
+.sig-side-h .x:hover{color:var(--accent);}
+.sig-ap-sub{font-family:var(--font-mono);font-size:.56rem;color:var(--text-2);padding:8px 14px;border-bottom:1px solid rgba(136,152,170,0.07);}
+.sig-aplist{flex:1;overflow-y:auto;}
+.sig-aplist::-webkit-scrollbar{width:8px;}
+.sig-aplist::-webkit-scrollbar-thumb{background:var(--line-soft);}
+.sig-ap{padding:11px 14px;border-bottom:1px solid rgba(136,152,170,0.07);}
+.sig-ap .ssid{font-family:var(--font-ui);font-weight:700;font-size:.74rem;color:var(--text-1);display:flex;align-items:center;gap:7px;}
+.sig-ap .ssid .enc{margin-left:auto;font-family:var(--font-mono);font-size:.5rem;letter-spacing:.04em;padding:2px 6px;border:1px solid var(--line-soft);color:var(--text-2);}
+.sig-ap .ssid .enc.open{color:var(--red);border-color:rgba(238,68,68,.4);}
+.sig-ap .ssid .enc.wpa3{color:var(--green);border-color:rgba(93,216,122,.4);}
+.sig-ap .bssid{font-family:var(--font-mono);font-size:.58rem;color:var(--text-2);margin-top:4px;}
+.sig-ap .meta{display:flex;gap:12px;margin-top:5px;font-family:var(--font-mono);font-size:.56rem;color:var(--text-2);}
+.sig-ap .meta b{color:var(--text-1);font-weight:400;}
+.sig-ap .bars{display:inline-flex;gap:2px;align-items:flex-end;height:11px;}
+.sig-ap .bars i{width:3px;background:var(--line-soft);}
+.sig-ap .bars i.on{background:var(--accent);}
+
+/* ---------- BOTTOM STATUS BAR ---------- */
+.sig-status{flex:0 0 auto;display:flex;align-items:center;background:var(--bg-secondary);border-top:1px solid var(--line);font-family:var(--font-mono);font-size:.6rem;}
+.sig-stat{padding:9px 16px;border-right:1px solid var(--line-soft);display:flex;align-items:center;gap:8px;color:var(--text-2);}
+.sig-stat b{color:var(--text-1);font-weight:400;font-size:.7rem;}
+.sig-stat.alert b{color:var(--red);}
+.sig-stat .run{display:flex;align-items:center;gap:7px;margin-left:auto;}
+.sig-stat .run .d{width:8px;height:8px;border-radius:50%;background:var(--green);animation:sigblink 1.4s steps(1) infinite;}
+.sig-stat.stopped .run .d{background:var(--red);animation:none;}
+@keyframes sigblink{50%{opacity:.3;}}
+.sig-status .right{margin-left:auto;display:flex;align-items:center;}
+
+/* ---------- CONFIRM DIALOG ---------- */
+.sig-dialog{position:fixed;inset:0;z-index:200;background:rgba(8,8,14,0.82);display:none;align-items:center;justify-content:center;padding:30px;}
+.sig-dialog.show{display:flex;}
+.sig-dialog-p{width:min(460px,94vw);background:var(--bg-primary);border:1px solid var(--red);}
+.sig-dialog-h{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line);font-family:var(--font-ui);font-weight:700;letter-spacing:.08em;color:var(--red);font-size:.84rem;}
+.sig-dialog-h .ic{font-size:1.1rem;}
+.sig-dialog-b{padding:16px 18px;font-family:var(--font-ui);font-size:.82rem;color:var(--text-1);line-height:1.6;}
+.sig-dialog-b .warn{font-family:var(--font-mono);font-size:.62rem;color:var(--accent);margin-top:12px;border-left:2px solid var(--accent);padding-left:10px;}
+.sig-dialog-f{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:9px;justify-content:flex-end;}
+.sig-db{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.08em;padding:9px 16px;cursor:pointer;border:1px solid var(--line-soft);background:transparent;color:var(--text-2);}
+.sig-db.danger{background:var(--red);color:#fff;border-color:var(--red);}
+.sig-db.danger:hover{background:#ff5a5a;}
+
+/* ---------- TOAST ---------- */
+.sig-toast{position:fixed;left:50%;bottom:46px;transform:translateX(-50%) translateY(10px);z-index:210;border:1px solid var(--accent);
+  background:var(--bg-secondary);color:var(--text-1);font-family:var(--font-mono);font-size:.64rem;padding:9px 16px;opacity:0;transition:.18s;pointer-events:none;max-width:70%;}
+.sig-toast.show{opacity:1;transform:translateX(-50%);}
+.sig-toast.ok{border-color:var(--green);}.sig-toast.err{border-color:var(--red);}.sig-toast.warn{border-color:var(--accent);}
+
+@media (max-width:1180px){.sig-side{width:260px;flex-basis:260px;}.sig-side.collapsed{margin-right:-260px;}}
+
+/* ---------- LIVE-integration additions (real /api/sigint/*) ---------- */
+.sig-mode.offline{border-color:var(--text-2);opacity:.85;animation:none;}
+.sig-mode.offline .ind{background:var(--text-2);box-shadow:none;}
+.sig-mode.offline .txt .big{color:var(--text-2);}
+.sig-oui .ctl.off{color:var(--red);}
+.sig-empty{text-align:center;color:var(--text-2);font-family:var(--font-mono);font-size:.66rem;padding:34px 14px !important;line-height:1.6;}
+.sig-dfield .v.mono{font-family:var(--font-mono);}

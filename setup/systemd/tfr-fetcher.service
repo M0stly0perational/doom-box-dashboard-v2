@@ -1,0 +1,16 @@
+[Unit]
+Description=FAA TFR (Temporary Flight Restriction) fetcher for DOOM BOX dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=doombox
+ExecStart=/usr/bin/python3 /home/doombox/tfr-fetcher/fetch.py
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/doombox/.node-red/static/dashboard/data/intel /home/doombox/tfr-fetcher
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
