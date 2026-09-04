@@ -6,10 +6,10 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 User=doombox
-ExecStart=/usr/bin/python3 /home/doombox/acled-fetcher/fetch.py
+ExecStart=/usr/bin/python3 %h/acled-fetcher/fetch.py
 ProtectSystem=full
 ProtectHome=read-only
-ReadWritePaths=/home/doombox/.node-red/static/dashboard/data/intel /home/doombox/acled-fetcher /home/doombox/.node-red
+ReadWritePaths=%h/.node-red/static/dashboard/data/intel %h/acled-fetcher %h/.node-red
 NoNewPrivileges=true
 
 [Install]

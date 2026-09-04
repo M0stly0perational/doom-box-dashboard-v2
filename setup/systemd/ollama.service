@@ -8,7 +8,7 @@ User=ollama
 Group=ollama
 Restart=always
 RestartSec=3
-Environment="PATH=/home/doombox/.local/bin:/home/doombox/.local/bin:/home/doombox/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games"
+Environment="PATH=/home/<user>/.local/bin:/home/<user>/.local/bin:/home/<user>/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games"
 
 [Install]
 WantedBy=default.target

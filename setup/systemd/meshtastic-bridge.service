@@ -10,7 +10,7 @@ Group=doombox
 RuntimeDirectory=meshtastic
 RuntimeDirectoryMode=0755
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/home/doombox/meshtastic-bridge-venv/bin/python3 /home/doombox/meshtastic-bridge/bridge.py
+ExecStart=%h/meshtastic-bridge-venv/bin/python3 %h/meshtastic-bridge/bridge.py
 Restart=always
 RestartSec=15
 StandardOutput=journal

@@ -1,6 +1,6 @@
 [Unit]
 Description=OFFGRID-BASE SIGINT controller (wlan1 mode toggle + passive capture)
-Documentation=file:///home/doombox/CLAUDE.md
+Documentation=file:///home/<user>/CLAUDE.md
 After=network-online.target hostapd.service
 Wants=network-online.target
 # Disabled-at-boot for v1: same posture as radio-supervisor. Operator starts

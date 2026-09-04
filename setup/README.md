@@ -2,8 +2,21 @@
 
 Reference copies of the host-level configuration this dashboard depends on.
 None of this is installed by cloning the repo — it documents what the field
-station's OS-level setup looks like. Paths and the service account name
-(`doombox`) are placeholders; substitute your own.
+station's OS-level setup looks like. The service account name (`doombox`)
+is a placeholder; substitute your own.
+
+**Home-directory paths use the systemd `%h` specifier**, not a hardcoded
+`/home/doombox`. `%h` expands at unit-load time to the home directory of
+whichever account that unit's `User=` is set to, so `ExecStart=`,
+`WorkingDirectory=`, `ReadWritePaths=`, etc. work unmodified for any account
+name — nothing to hand-edit. Two units are the exception: `ollama.service`
+(`User=ollama`) and `sigint-controller.service` (`User=root`) each reference
+a path that belongs to the *operator's* home directory, not the account the
+unit actually runs as — `%h` would silently resolve to the wrong directory
+there (`/usr/share/ollama` or `/root`), so those two use a literal
+`<user>` placeholder instead. Replace `<user>` with your operator account
+name by hand in those two files only; everything else needs no edits beyond
+matching `User=`/`Group=` to the account you actually created.
 
 ## `udev/70-gps-heltec.rules`
 

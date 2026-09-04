@@ -6,10 +6,10 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 User=doombox
-ExecStart=/usr/bin/python3 /home/doombox/firms-fetcher/fetch.py
+ExecStart=/usr/bin/python3 %h/firms-fetcher/fetch.py
 ProtectSystem=full
 ProtectHome=read-only
-ReadWritePaths=/home/doombox/.node-red/static/dashboard/data/intel /home/doombox/firms-fetcher
+ReadWritePaths=%h/.node-red/static/dashboard/data/intel %h/firms-fetcher
 NoNewPrivileges=true
 
 [Install]

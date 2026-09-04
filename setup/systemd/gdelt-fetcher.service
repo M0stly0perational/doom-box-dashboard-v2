@@ -6,10 +6,10 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 User=doombox
-ExecStart=/usr/bin/python3 /home/doombox/gdelt-fetcher/fetch.py
+ExecStart=/usr/bin/python3 %h/gdelt-fetcher/fetch.py
 ProtectSystem=full
 ProtectHome=read-only
-ReadWritePaths=/home/doombox/.node-red/static/dashboard/data/intel /home/doombox/gdelt-fetcher
+ReadWritePaths=%h/.node-red/static/dashboard/data/intel %h/gdelt-fetcher
 NoNewPrivileges=true
 
 [Install]
