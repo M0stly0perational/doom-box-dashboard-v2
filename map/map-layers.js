@@ -11,6 +11,7 @@ window.DBMap = window.DBMap || {};
   "use strict";
   var S = M.state;
   var V1 = "/dashboard";
+  var ORIGIN = window.location.origin;
   function map() { return M.getMap(); }
   function regionId() { return S.activeId || "lasvegas"; }
 
@@ -87,9 +88,12 @@ window.DBMap = window.DBMap || {};
   var crimeReady = { heat: false, cfs: false };
   function addCrimeHeat() {
     var mp = map(); if (!mp || crimeReady.heat) return;
-    if (!mp.getSource("crime-nibrs")) mp.addSource("crime-nibrs", { type: "geojson", data: V1 + "/data/crime/nibrs-1y.geojson" });
+    // Tiled by crime-fetcher (tippecanoe -> pmtiles) after every refresh — was a
+    // single 54MB/124k-feature GeoJSON blob loaded whole on every map load.
+    // CFS pins below are unaffected; that source stays small GeoJSON as-is.
+    if (!mp.getSource("crime-nibrs")) mp.addSource("crime-nibrs", { type: "vector", url: "pmtiles://" + ORIGIN + V1 + "/data/crime/nibrs.pmtiles" });
     mp.addLayer({
-      id: "crime-heatmap", type: "heatmap", source: "crime-nibrs", maxzoom: 15, layout: { visibility: "none" },
+      id: "crime-heatmap", type: "heatmap", source: "crime-nibrs", "source-layer": "crimes", maxzoom: 15, layout: { visibility: "none" },
       paint: {
         "heatmap-weight": ["case", ["==", ["get", "ViolentCrime"], "Yes"], 0.6, 0.3],
         "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 0.15, 10, 0.30, 13, 0.70, 15, 1.20],
