@@ -52,6 +52,10 @@ window.DBMap = window.DBMap || {};
     basemap: localStorage.getItem("db_map_basemap") || "vector",   // vector | satellite | hires
     satSource: localStorage.getItem("db_map_sat_src") || "esri",   // usgs | esri — esri reaches z19 nationwide (USGS 404s past z16 outside select project areas; confirmed 2026-08-05 for the tx-nm-snv operating area)
     hiresZip: localStorage.getItem("db_map_hires_zip") || null,     // active NAIP hi-res archive (ZIP code) when basemap === "hires"
+    worldBm: localStorage.getItem("db_map_worldbm") !== "0",        // GIBS BlueMarble offline world backdrop (style underlay) — default ON
+    usImagery: localStorage.getItem("db_map_us_imagery") !== "0",   // USGS CONUS imagery underlay z7-9 (Tier 2, above world-bm) — default ON
+    regionDfw: localStorage.getItem("db_map_region_dfw") !== "0",     // NAIP z10-16 regional imagery — DFW metro (Tier 3, above us-z9) — default ON
+    regionVegas: localStorage.getItem("db_map_region_vegas") !== "0", // NAIP z10-16 regional imagery — Las Vegas metro (Tier 3, above us-z9) — default ON
     entity: {
       tak:  localStorage.getItem("db_map_layer_tak")  === "1",
       adsb: localStorage.getItem("db_map_layer_adsb") === "1",
@@ -262,9 +266,31 @@ window.DBMap = window.DBMap || {};
       sources: {
         protomaps: { type: "vector", url: PMT, attribution: '© <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> via Protomaps' },
         sat_usgs: { type: "raster", tileSize: 256, tiles: [SAT_USGS], maxzoom: 16, attribution: 'Imagery © USGS — The National Map' },
-        sat_esri: { type: "raster", tileSize: 256, tiles: [SAT_ESRI], maxzoom: 19, attribution: 'Tiles © Esri — Maxar, Earthstar Geographics, USGS' }
+        sat_esri: { type: "raster", tileSize: 256, tiles: [SAT_ESRI], maxzoom: 19, attribution: 'Tiles © Esri — Maxar, Earthstar Geographics, USGS' },
+        // Offline world backdrop — local BlueMarble PMTiles raster, never an external URL.
+        world_bm: { type: "raster", tileSize: 256, maxzoom: 6, url: "pmtiles://" + ORIGIN + V1 + "/basemaps/world-bm.pmtiles", attribution: 'Blue Marble — NASA Earth Observatory / GIBS' },
+        // Tier-2 CONUS imagery underlay — local USGS ImageryOnly PMTiles raster (z7-9), never an external URL.
+        us_z9: { type: "raster", tileSize: 256, maxzoom: 9, url: "pmtiles://" + ORIGIN + V1 + "/basemaps/us-z9.pmtiles", attribution: 'Imagery © USGS — The National Map (NAIP)' },
+        // Tier-3 regional NAIP imagery (z10-16) — local PMTiles rasters on the NVMe,
+        // served the same way as world_bm/us_z9 above, never an external URL.
+        // DFW and Vegas don't overlap geographically, so both sources can stay active —
+        // each only has tiles over its own bbox, transparent/absent elsewhere.
+        region_dfw: { type: "raster", tileSize: 256, minzoom: 10, maxzoom: 16, url: "pmtiles://" + ORIGIN + V1 + "/basemaps/dfw.pmtiles", attribution: "NAIP / USDA — public domain" },
+        region_vegas: { type: "raster", tileSize: 256, minzoom: 10, maxzoom: 16, url: "pmtiles://" + ORIGIN + V1 + "/basemaps/vegas.pmtiles", attribution: "NAIP / USDA — public domain" }
       },
+      // world-bm-tiles is the lowest layer above the opaque background: vector
+      // fills cover it where the archive has data (dark map unchanged); it shows
+      // through where the archive has none (zoomed-out / off-region void).
+      // us-z9-tiles sits just above it — CONUS imagery for the z7-9 gap between
+      // the world backdrop (z0-6) and the regional vector archives.
+      // region-{dfw,vegas}-tiles sit above us-z9 and below the vector layers —
+      // Tier 3: sharp z10-16 NAIP imagery over their own metro bboxes, handing off
+      // from the us-z9 z7-9 CONUS underlay as the operator zooms in.
       layers: bg.concat([
+        { id: "world-bm-tiles", type: "raster", source: "world_bm", layout: { visibility: S.worldBm ? "visible" : "none" } },
+        { id: "us-z9-tiles", type: "raster", source: "us_z9", layout: { visibility: S.usImagery ? "visible" : "none" } },
+        { id: "region-dfw-tiles", type: "raster", source: "region_dfw", layout: { visibility: S.regionDfw ? "visible" : "none" } },
+        { id: "region-vegas-tiles", type: "raster", source: "region_vegas", layout: { visibility: S.regionVegas ? "visible" : "none" } },
         { id: "sat-usgs-tiles", type: "raster", source: "sat_usgs", layout: { visibility: "none" } },
         { id: "sat-esri-tiles", type: "raster", source: "sat_esri", layout: { visibility: "none" } }
       ], rest)
@@ -371,8 +397,8 @@ window.DBMap = window.DBMap || {};
      BASEMAP / SATELLITE / HI-RES (downloaded NAIP PMTiles)
      ============================================================ */
   // Lazily add a raster source+layer for a downloaded NAIP archive the first
-  // time it's selected. Local file, served by the existing SanDisk httpStatic
-  // dual-mount (/media/sandisk -> /media/) — no proxy needed, unlike the
+  // time it's selected. Local file, served by the NVMe httpStatic dual-mount
+  // (~/media-local -> /media/) — no proxy needed, unlike the
   // live satellite tiles, since this is fully local data.
   var _hiresLayers = {};   // zip -> true once its source/layer exist
   function ensureHiresLayer(zip) {
@@ -396,6 +422,12 @@ window.DBMap = window.DBMap || {};
     }
     _map.setLayoutProperty("sat-usgs-tiles", "visibility", sat && S.satSource === "usgs" ? "visible" : "none");
     _map.setLayoutProperty("sat-esri-tiles", "visibility", sat && S.satSource === "esri" ? "visible" : "none");
+    // World backdrop underlay — driven purely by its own toggle, independent of basemap mode.
+    if (_map.getLayer("world-bm-tiles")) _map.setLayoutProperty("world-bm-tiles", "visibility", S.worldBm ? "visible" : "none");
+    if (_map.getLayer("us-z9-tiles")) _map.setLayoutProperty("us-z9-tiles", "visibility", S.usImagery ? "visible" : "none");
+    // Tier-3 regional imagery underlays — driven purely by their own toggles, independent of basemap mode.
+    if (_map.getLayer("region-dfw-tiles")) _map.setLayoutProperty("region-dfw-tiles", "visibility", S.regionDfw ? "visible" : "none");
+    if (_map.getLayer("region-vegas-tiles")) _map.setLayoutProperty("region-vegas-tiles", "visibility", S.regionVegas ? "visible" : "none");
     // Hide every known hi-res layer, then show only the active one (if any) —
     // the operator may have viewed several cached ZIPs across the session.
     Object.keys(_hiresLayers).forEach(function (z) {
@@ -410,6 +442,30 @@ window.DBMap = window.DBMap || {};
     localStorage.setItem("db_map_basemap", S.basemap);
     localStorage.setItem("db_map_sat_src", S.satSource);
     if (S.hiresZip) localStorage.setItem("db_map_hires_zip", S.hiresZip);
+    applyBasemap();
+  };
+  // Toggle the GIBS BlueMarble world backdrop underlay (default ON, persisted).
+  M.setWorldBm = function (on) {
+    S.worldBm = !!on;
+    localStorage.setItem("db_map_worldbm", on ? "1" : "0");
+    applyBasemap();
+  };
+  // Toggle the USGS CONUS imagery underlay (Tier 2, default ON, persisted).
+  M.setUsImagery = function (on) {
+    S.usImagery = !!on;
+    localStorage.setItem("db_map_us_imagery", on ? "1" : "0");
+    applyBasemap();
+  };
+  // Toggle the DFW regional NAIP imagery underlay (Tier 3, z10-16, default ON, persisted).
+  M.setRegionDfw = function (on) {
+    S.regionDfw = !!on;
+    localStorage.setItem("db_map_region_dfw", on ? "1" : "0");
+    applyBasemap();
+  };
+  // Toggle the Las Vegas regional NAIP imagery underlay (Tier 3, z10-16, default ON, persisted).
+  M.setRegionVegas = function (on) {
+    S.regionVegas = !!on;
+    localStorage.setItem("db_map_region_vegas", on ? "1" : "0");
     applyBasemap();
   };
   // Public: list of ZIPs that currently have a lazily-created layer this session.

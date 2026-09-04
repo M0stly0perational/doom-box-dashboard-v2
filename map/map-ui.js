@@ -150,12 +150,12 @@ window.DBMap = window.DBMap || {};
     x.addEventListener("click", function () { p.classList.remove("open"); });
     var body = el("div", "rp-body");
 
-    // BASEMAP
+    // BASEMAP (offline stack only — the "Online only" satellite toggles live
+    // in Map Settings below, off by default, so the default view is what the
+    // field actually sees with no internet.)
     var s1 = accordion("Basemap", true);
     var bmOpts = [
-      { id: "vector", lab: "Vector — Protomaps dark", sat: false },
-      { id: "sat_usgs", lab: "Satellite — USGS", sat: true, src: "usgs" },
-      { id: "sat_esri", lab: "Satellite — ESRI", sat: true, src: "esri" }
+      { id: "vector", lab: "Vector — Protomaps dark", sat: false }
     ];
     function curBm() { return S.basemap === "satellite" ? ("sat_" + S.satSource) : "vector"; }
     bmOpts.forEach(function (o) {
@@ -168,6 +168,10 @@ window.DBMap = window.DBMap || {};
       });
       s1.body.appendChild(r);
     });
+    s1.body.appendChild(toggleRow("World imagery backdrop", S.worldBm, M.setWorldBm));
+    s1.body.appendChild(toggleRow("US imagery", S.usImagery, M.setUsImagery));
+    s1.body.appendChild(toggleRow("DFW hi-res imagery (z16)", S.regionDfw, M.setRegionDfw));
+    s1.body.appendChild(toggleRow("Vegas hi-res imagery (z16)", S.regionVegas, M.setRegionVegas));
     body.appendChild(s1.root);
 
     // TACTICAL OVERLAYS (real)
@@ -199,6 +203,25 @@ window.DBMap = window.DBMap || {};
     ["MGRS", "Decimal", "DMS"].forEach(function (o) { var op = el("option", null, o); op.value = o; if (o === U._fmt) op.selected = true; dd.appendChild(op); });
     dd.addEventListener("change", function () { U._fmt = dd.value; localStorage.setItem("db_map_coordfmt", dd.value); });
     sel.appendChild(dd); s3.body.appendChild(sel);
+
+    // Live satellite imagery — fetches from the internet on every tile, default
+    // OFF, deliberately tucked away here (not the Basemap accordion) so it's
+    // never what a field/offline operator sees by default.
+    s3.body.appendChild(el("div", "dbm-grp", "── Online only (needs internet) ──"));
+    var satRows = [];
+    function syncSatRows() {
+      satRows.forEach(function (sr) {
+        sr.row.classList.toggle("on", S.basemap === "satellite" && S.satSource === sr.src);
+      });
+    }
+    [{ src: "usgs", lab: "Satellite — USGS (live)" }, { src: "esri", lab: "Satellite — ESRI (live)" }].forEach(function (o) {
+      var row = toggleRow(o.lab, S.basemap === "satellite" && S.satSource === o.src, function (on) {
+        if (on) M.setBasemap("satellite", o.src); else M.setBasemap("vector");
+        syncSatRows();
+      });
+      satRows.push({ row: row, src: o.src });
+      s3.body.appendChild(row);
+    });
     body.appendChild(s3.root);
 
     var sum = el("div", "dbm-summary");
