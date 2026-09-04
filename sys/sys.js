@@ -136,15 +136,13 @@ window.DBSys = window.DBSys || {};
 
   /* ===== STORAGE ===== */
   function renderStorage() {
-    var n = S.state.nvme, sd = S.state.sandisk;
-    var nPct = Math.round(n.usedGb / n.totalGb * 100), sPct = Math.round(sd.usedGb / sd.totalGb * 100);
+    var n = S.state.nvme;
+    var nPct = Math.round(n.usedGb / n.totalGb * 100);
     body('storage').innerHTML =
       head(IC.disk, 'STORAGE') +
       '<div class="sys-sub"><div class="st">NVMe ' + n.totalGb + ' GB ' + badge('bg-green', n.smart + ' · SMART') + '</div>' +
       bar(nPct) + '<div class="mono dim" style="font-size:.58rem;margin-top:5px">' + n.usedGb + ' GB / ' + n.totalGb + ' GB used</div>' +
-      '<div class="sys-paths"><span>/home</span><span class="v">45 GB</span><span>Ollama models</span><span class="v">8 GB</span><span>PMTiles maps</span><span class="v">35 GB</span><span>Dashboard</span><span class="v">2 GB</span></div></div>' +
-      '<div class="sys-sub"><div class="st">SanDisk 1TB USB ' + badge(sd.mounted ? 'bg-green' : 'bg-red', sd.mounted ? 'MOUNTED' : 'UNMOUNTED') + '</div>' +
-      bar(sPct) + '<div class="mono dim" style="font-size:.58rem;margin-top:5px">' + sd.usedGb + ' GB / ' + sd.totalGb + ' GB used · write ' + sd.writeMb + ' MB/s</div></div>';
+      '<div class="sys-paths"><span>/home</span><span class="v">45 GB</span><span>Ollama models</span><span class="v">8 GB</span><span>PMTiles maps</span><span class="v">35 GB</span><span>Dashboard</span><span class="v">2 GB</span></div></div>';
   }
 
   /* ===== NETWORK ===== */

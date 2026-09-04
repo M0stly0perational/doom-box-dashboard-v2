@@ -1,14 +1,14 @@
 /* ============================================================
    DOOM BOX — MEDIA DATA (LIVE)
-   Real SanDisk file browser + Kiwix ZIM library. Replaces the mock.
+   Local file browser (~/media-local) + Kiwix ZIM library. Replaces the mock.
    Wires:
      GET /api/media/list?path=<rel>     (Node-RED, same-origin :1880)
      GET /api/media/pmtiles-info?path=  (Node-RED)
      Kiwix on :8888 (CORS *): /catalog/v2/entries, /search?pattern=
    Media files stream from the httpStatic dual-mount at /media/<rel>
    (Range-served — videos seek; never proxied through Node-RED).
-   SanDisk mount verified at /media/sandisk -> served at /media/.
-   Storage figures come from /api/system disk.sandisk (live).
+   Served from local NVMe (~/media-local -> /media/) since the SanDisk
+   drive was fully retired 2026-09-02.
    ============================================================ */
 window.DBMedia = window.DBMedia || {};
 (function (M) {
@@ -72,17 +72,6 @@ window.DBMedia = window.DBMedia || {};
       M._dirCache[cwd] = res;
       return res;
     });
-  };
-
-  /* ============================================================ STORAGE (live)
-     from /api/system disk.sandisk (bytes). */
-  M.STORAGE = { used: 0, total: 0, free: 0 };
-  M.loadStorage = function () {
-    return M.api.getJSON('/api/system').then(function (s) {
-      var d = (s && s.disk && s.disk.sandisk) ? s.disk.sandisk : null;
-      if (d) M.STORAGE = { used: d.used_b, total: d.total_b, free: d.free_b };
-      return M.STORAGE;
-    }).catch(function () { return M.STORAGE; });
   };
 
   /* ============================================================ KIWIX LIBRARY */
@@ -168,7 +157,7 @@ window.DBMedia = window.DBMedia || {};
     }).catch(function () { return []; });
   };
 
-  /* ---- bounded recursive filename search across the SanDisk ----
+  /* ---- bounded recursive filename search across local media ----
      Walks via the list API with hard caps so a huge tree can't freeze
      the browser or storm the endpoint. */
   M.searchFiles = function (q, opts) {

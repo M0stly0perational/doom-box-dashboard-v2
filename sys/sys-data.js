@@ -18,8 +18,8 @@
 
    Fields with no existing endpoint are shown best-effort and noted
    in CLAUDE.md: cpu.freq (static 2.4 GHz), nvme SMART (N/A),
-   sandisk write rate (—), wlan0 signal (—), wg peer counts (—),
-   mesh "5m heard" uses total node_count.
+   wlan0 signal (—), wg peer counts (—), mesh "5m heard" uses total
+   node_count. (SanDisk gauge removed 2026-09-02 — drive retired.)
    ============================================================ */
 window.DBSys = window.DBSys || {};
 (function (S) {
@@ -59,7 +59,6 @@ window.DBSys = window.DBSys || {};
       cpu: { cores: [0, 0, 0, 0], temp: 0, freq: 2.4, tempHist: [], uptimeMin: 0 },
       mem: { usedGb: 0, totalGb: 8, cachedGb: 0, swapMb: 0 },
       nvme: { usedGb: 0, totalGb: 235, smart: 'N/A' },
-      sandisk: { usedGb: 0, totalGb: 932, mounted: false, writeMb: 0 },
       net: {
         wlan0: { up: false, ip: '', sig: '—', tx: 0, rx: 0, hist: emptyHist() },
         wlan1: { up: false, ip: '192.168.4.1', clients: 0, tx: 0, rx: 0, hist: emptyHist() },
@@ -188,13 +187,6 @@ window.DBSys = window.DBSys || {};
       if (d.disk.root) {
         st.nvme.usedGb = Math.round(num(d.disk.root.used_b, 0) / GiB);
         st.nvme.totalGb = Math.round(num(d.disk.root.total_b, 0) / GiB);
-      }
-      if (d.disk.sandisk) {
-        st.sandisk.usedGb = Math.round(num(d.disk.sandisk.used_b, 0) / GiB);
-        st.sandisk.totalGb = Math.round(num(d.disk.sandisk.total_b, 0) / GiB);
-        st.sandisk.mounted = true;
-      } else {
-        st.sandisk.mounted = false;
       }
     }
 

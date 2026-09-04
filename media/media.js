@@ -1,6 +1,6 @@
 /* ============================================================
    DOOM BOX — MEDIA UI (LIVE)
-   Kiwix library + SanDisk browser (grid/list, virtual scroll),
+   Kiwix library + local media browser (grid/list, virtual scroll),
    REAL media overlays, ZIM->Kiwix, unified search (files + ZIM
    article content). DBMedia.mount(). Driven by /api/media/* +
    Kiwix :8888. Media served from /media/<rel> (Range static).
@@ -44,7 +44,6 @@ window.DBMedia = window.DBMedia || {};
     buildLib(body); buildFB(body); buildUnified(); buildOverlay(); buildDialog(); buildToast();
     // initial live loads
     renderLibLoading();
-    M.loadStorage().then(function () { if (alive()) { renderStorage(refs.libStore); renderStorage(refs.fbStore); } });
     M.loadCatalog().then(function () { if (alive()) renderLib(); }).catch(function () { if (alive()) renderLibError(); });
     loadCwd('');
   };
@@ -66,8 +65,6 @@ window.DBMedia = window.DBMedia || {};
       cats.appendChild(b);
     });
     refs.zimWrap = el('div', 'med-zimwrap'); lib.appendChild(refs.zimWrap);
-    var foot = el('div', 'med-lib-foot'); foot.innerHTML = '<div class="med-sec-h">SANDISK STORAGE</div><div class="med-storage" id="medLibStore"></div>'; lib.appendChild(foot);
-    refs.libStore = foot.querySelector('#medLibStore');
   }
   function renderLibLoading() { refs.libSub.textContent = 'Loading Kiwix catalog…'; refs.zimWrap.innerHTML = '<div class="med-empty">Loading offline library…</div>'; }
   function renderLibError() { refs.libSub.textContent = 'Kiwix catalog unavailable'; refs.zimWrap.innerHTML = '<div class="med-empty">Could not reach Kiwix on :8888</div>'; }
@@ -120,24 +117,17 @@ window.DBMedia = window.DBMedia || {};
   }
   function openKiwix(url, title) { window.open(url, '_blank', 'noopener'); toast('ok', 'Opening in Kiwix :8888 — ' + (title || '')); }
 
-  function renderStorage(node) {
-    if (!node) return;
-    var s = M.STORAGE; if (!s.total) { node.innerHTML = '<div class="track"><i style="width:0%"></i></div><div class="lbl"><span>loading…</span></div>'; return; }
-    var pct = s.used / s.total * 100;
-    node.innerHTML = '<div class="track"><i style="width:' + pct.toFixed(1) + '%"></i></div><div class="lbl"><span><b>' + M.fmtSize(s.used) + '</b> used</span><span>' + M.fmtSize(s.free) + ' free of ' + M.fmtSize(s.total) + '</span></div>';
-  }
-
   /* ============================================================ FILE BROWSER */
   function buildFB(body) {
     var fb = el('div', 'med-fb med-brk'); body.appendChild(fb); refs.fb = fb;
     var head = el('div', 'med-fb-head');
-    head.innerHTML = '<div class="top"><span class="med-sec-h">SANDISK 1TB</span><div class="med-storage" id="medFbStore"></div></div>' +
+    head.innerHTML = '<div class="top"><span class="med-sec-h">LOCAL STORAGE</span></div>' +
       '<div class="med-toolbar"><div class="med-crumb" id="medCrumb"></div>' +
       '<div class="med-tb-group" id="medView"><button data-v="grid">▦ GRID</button><button data-v="list" class="on">≣ LIST</button></div>' +
       '<select class="med-select" id="medSort"><option value="name">NAME</option><option value="date">DATE</option><option value="size">SIZE</option><option value="type">TYPE</option></select>' +
       '<select class="med-select" id="medFilter"><option value="all">ALL TYPES</option><option value="folder">FOLDERS</option><option value="video">VIDEO</option><option value="audio">AUDIO</option><option value="image">IMAGES</option><option value="doc">DOCS</option><option value="zim">ZIM</option></select></div>';
     fb.appendChild(head);
-    refs.fbStore = head.querySelector('#medFbStore'); refs.crumb = head.querySelector('#medCrumb');
+    refs.crumb = head.querySelector('#medCrumb');
     head.querySelector('#medView').addEventListener('click', function (e) { var b = e.target.closest('[data-v]'); if (!b) return; ST.view = b.getAttribute('data-v'); [].forEach.call(this.children, function (n) { n.classList.toggle('on', n === b); }); renderFiles(); });
     head.querySelector('#medSort').addEventListener('change', function () { ST.sort = this.value; renderFiles(); });
     head.querySelector('#medFilter').addEventListener('change', function () { ST.filter = this.value; renderFiles(); });
@@ -161,7 +151,7 @@ window.DBMedia = window.DBMedia || {};
   function renderCrumb() {
     var c = refs.crumb; c.innerHTML = '';
     var segs = ST.cwd ? ST.cwd.replace(/^\//, '').split('/') : [];
-    var root = el('span', 'seg' + (segs.length === 0 ? ' cur' : ''), 'SANDISK');
+    var root = el('span', 'seg' + (segs.length === 0 ? ' cur' : ''), 'LOCAL');
     root.addEventListener('click', function () { navTo(''); });
     c.appendChild(root);
     var acc = '';
@@ -351,7 +341,7 @@ window.DBMedia = window.DBMedia || {};
   function buildUnified() {
     var u = el('div', 'med-unified'); wrap.appendChild(u);
     u.innerHTML = '<div class="med-results" id="medResults"></div><div class="row"><span class="ic">' + ICON.search + '</span>' +
-      '<input placeholder="Unified search — files on SanDisk + article content across all Kiwix libraries…"><span class="hint">FILES + LIBRARIES</span></div>';
+      '<input placeholder="Unified search — local files + article content across all Kiwix libraries…"><span class="hint">FILES + LIBRARIES</span></div>';
     refs.results = u.querySelector('#medResults'); refs.uInput = u.querySelector('input');
     refs.uInput.addEventListener('input', function () { scheduleUnified(this.value); });
     refs.uInput.addEventListener('focus', function () { if (this.value.trim()) scheduleUnified(this.value); });
