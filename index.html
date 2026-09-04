@@ -582,23 +582,18 @@ body.desktop-mode .content::-webkit-scrollbar{display:none;}
     {id:'SYS',   name:'SYS',    key:'0', desc:'System health · 7 diagnostic cards'}
   ];
 
-  var TICKER = [
-    {tg:'ALERT', c:'var(--red)',    t:'0412Z', x:'SHOTS FIRED reported vicinity Dorchester Ave — units responding'},
-    {tg:'NEWS',  c:'var(--text-1)', t:'0409Z', x:'City council approves emergency communications budget +12%'},
-    {tg:'WX',    c:'var(--accent)', t:'0405Z', x:'WIND ADVISORY in effect until 1800Z — gusts to 45 kt'},
-    {tg:'CRIME', c:'var(--orange)', t:'0401Z', x:'B&E cluster flagged — 4 incidents within 0.8 km grid'},
-    {tg:'MSG',   c:'var(--blue)',   t:'0358Z', x:'node RELAY-07 reconnected — mesh integrity nominal'},
-    {tg:'NEWS',  c:'var(--text-1)', t:'0351Z', x:'Power grid load steady · regional draw 61% of capacity'},
-    {tg:'WX',    c:'var(--accent)', t:'0347Z', x:'Temp 4°C · Baro 1014 hPa falling · visibility 9 km'},
-    {tg:'ALERT', c:'var(--red)',    t:'0340Z', x:'MILITARY aircraft squawk detected — see ADS-B module'}
-  ];
+  /* Ticker + chips start empty/neutral — real content arrives via
+     DBShell.ticker() pushes and DBHome.chips() (see home/home-live.js).
+     Previously seeded with fabricated incident/status text that stayed
+     visible until enough real items pushed it out. */
+  var TICKER = [];
 
   var CHIPS = [
-    {k:'GPS', v:'LOCK', c:'var(--green)'},
-    {k:'NET', v:'LAN',  c:'var(--blue)'},
-    {k:'RF',  v:'SCAN', c:'var(--orange)'},
-    {k:'AI',  v:'RDY',  c:'var(--purple)'},
-    {k:'BATT',v:'84%',  c:'var(--green)'}
+    {k:'GPS', v:'—', c:'var(--text-2)'},
+    {k:'NET', v:'—', c:'var(--text-2)'},
+    {k:'RF',  v:'—', c:'var(--text-2)'},
+    {k:'AI',  v:'—', c:'var(--text-2)'},
+    {k:'BATT',v:'—', c:'var(--text-2)'}
   ];
 
   /* ---------------- el helpers ---------------- */
@@ -653,7 +648,6 @@ body.desktop-mode .content::-webkit-scrollbar{display:none;}
     WX:    svg('<path d="M7 17.5 H16.8 a3.6 3.6 0 0 0 .2-7.2 A5 5 0 0 0 7.6 8.7 A3.7 3.7 0 0 0 7 17.5 Z"/>'),
     ADSB:     svg('<path d="M12 2.5 L13 9.5 L21.5 14 V15.8 L13 13 V18.5 L15.5 20.5 V21.8 L12 20.5 L8.5 21.8 V20.5 L11 18.5 V13 L2.5 15.8 V14 L11 9.5 Z"/>'),
     CONFLICT: svg('<circle cx="12" cy="12" r="5.5"/><path d="M12 2.5V5.5 M12 18.5V21.5 M2.5 12H5.5 M18.5 12H21.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>'),
-    RADIO: svg('<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><path d="M8.6 8.6 a5 5 0 0 0 0 6.8"/><path d="M15.4 8.6 a5 5 0 0 1 0 6.8"/><path d="M6.1 6.1 a8.5 8.5 0 0 0 0 11.8"/><path d="M17.9 6.1 a8.5 8.5 0 0 1 0 11.8"/>'),
     MESH:  svg('<path d="M12 3 L19 7.25 V15.75 L12 20 L5 15.75 V7.25 Z"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M12 12 L12 3 M12 12 L19 15.75 M12 12 L5 15.75"/>'),
     SIGINT:svg('<path d="M11 21 H13"/><path d="M12 21 V9"/><circle cx="12" cy="7" r="1.3" fill="currentColor" stroke="none"/><path d="M15 5.4 a5 5 0 0 1 0 7.2"/><path d="M17.6 3.4 a8.6 8.6 0 0 1 0 11.2"/>'),
     MEDIA: svg('<path d="M3 7 H9 L11 9 H21 V18.5 H3 Z"/><path d="M3 11.2 H21"/>'),
@@ -662,7 +656,7 @@ body.desktop-mode .content::-webkit-scrollbar{display:none;}
   };
   var ICON_NEWS = svg('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12 H20.5 M12 3.5 C15 6.5 15 17.5 12 20.5 C9 17.5 9 6.5 12 3.5 Z"/>');
   var ICON_WARN = svg('<path d="M12 3 L21 12 L12 21 L3 12 Z"/><path d="M12 8 V13.2"/><circle cx="12" cy="16.4" r="0.95" fill="currentColor" stroke="none"/>');
-  var ICON_COMMS= ICONS.RADIO;
+  var ICON_COMMS = svg('<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><path d="M8.6 8.6 a5 5 0 0 0 0 6.8"/><path d="M15.4 8.6 a5 5 0 0 1 0 6.8"/><path d="M6.1 6.1 a8.5 8.5 0 0 0 0 11.8"/><path d="M17.9 6.1 a8.5 8.5 0 0 1 0 11.8"/>');
 
   /* ---------------- nav state + render ---------------- */
   var HOME={id:'HOME',name:'HOME',desc:'Command center situation display'};
@@ -710,46 +704,14 @@ body.desktop-mode .content::-webkit-scrollbar{display:none;}
   function z(d){return '['+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+':'+pad(d.getUTCSeconds())+'Z]';}
   function csColor(cs){var h=0;for(var i=0;i<cs.length;i++){h=(h*31+cs.charCodeAt(i))%360;}return 'hsl('+h+',65%,64%)';}
 
-  var NEWS=[
-    {d:ago(3), x:'City council approves emergency comms budget increase of 12%'},
-    {d:ago(11),x:'Regional power grid load steady at 61% of rated capacity'},
-    {d:ago(19),x:'Port authority resumes night operations after equipment fault'},
-    {d:ago(27),x:'Transit agency adds two routes to eastern corridor service'},
-    {d:ago(38),x:'Water main repair closes Dorchester Ave between 4th and 7th'},
-    {d:ago(52),x:'University lab publishes regional seismic monitoring dataset'}
-  ];
-  var NEWS_POOL=['Fiber backbone maintenance window scheduled 0200-0400Z',
-    'Local airport reports minor ground stop, weather related',
-    'Municipal radio system firmware update rolling out tonight',
-    'Harbor patrol logs increased vessel traffic near channel 12',
-    'County issues procurement notice for backup generators',
-    'Highway sensor network restored after brief outage'];
-  var CRIME=[
-    {d:ago(8),  type:'ASSAULT',     loc:'Dorchester Ave / 4th St'},
-    {d:ago(22), type:'B&E',         loc:'Warehouse Row, Unit 14'},
-    {d:ago(34), type:'ROBBERY',     loc:'Transit Plaza North'},
-    {d:ago(46), type:'SHOTS FIRED', loc:'Industrial Park Sector 3'},
-    {d:ago(58), type:'CARJACKING',  loc:'I-93 Overpass, Exit 12'},
-    {d:ago(71), type:'VANDALISM',   loc:'Civic Center Lot B'}
-  ];
-  var CRIME_POOL=[
-    {type:'SHOTS FIRED',loc:'Vicinity Maple & 9th'},
-    {type:'ASSAULT',loc:'Riverside Walk, East'},
-    {type:'B&E',loc:'Commercial Block 200'},
-    {type:'ARMED ROBBERY',loc:'Fuel Station, Route 1'},
-    {type:'DISTURBANCE',loc:'Metro Station, Lower Concourse'}
-  ];
-  var MESH=[
-    {d:ago(1), cs:'RELAY-07', msg:'reconnected, mesh integrity nominal'},
-    {d:ago(4), cs:'OVERWATCH',msg:'copy, holding position grid 8364'},
-    {d:ago(9), cs:'GHOST-3',  msg:'moving to checkpoint, eta 6 mike'},
-    {d:ago(14),cs:'BASE-1',   msg:'all stations radio check, how copy'},
-    {d:ago(21),cs:'NOMAD',    msg:'solar at 84 percent, batt holding'},
-    {d:ago(33),cs:'RELAY-07', msg:'rebroadcast complete'}
-  ];
-  var MESH_CS=['RELAY-07','OVERWATCH','GHOST-3','BASE-1','NOMAD','SCOUT-9','ECHO-2'];
-  var MESH_MSG=['radio check, how copy','moving to next waypoint','copy all, out',
-    'signal strong this location','rebroadcasting now','holding at last grid','comms nominal'];
+  /* HOME card feeds start empty — real content arrives via DBHome.feeds()
+     (see home/home-live.js), which overwrites these on first successful
+     fetch. Previously seeded with fabricated news/crime/mesh items that
+     stayed visible until a live fetch replaced them (or indefinitely, if
+     it never succeeded). */
+  var NEWS=[];
+  var CRIME=[];
+  var MESH=[];
 
   /* ---------------- home render ---------------- */
   function fmtHome(){
@@ -831,27 +793,7 @@ body.desktop-mode .content::-webkit-scrollbar{display:none;}
     var mb=el('meshBadge'); if(mb){mb.textContent=meshUnread>0?meshUnread:''; mb.style.display=meshUnread>0?'inline-grid':'none';}
     renderStatus();
   }
-  function pulseCard(key){var c=el('card_'+key); if(c){c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse');}}
-
-  /* ---------------- live injects ---------------- */
-  function injectNews(){
-    NEWS.unshift({d:new Date(),x:NEWS_POOL[Math.floor(Math.random()*NEWS_POOL.length)]});
-    if(NEWS.length>40)NEWS.pop(); unread.OSINT++; renderNavBadges();
-    if(active==='HOME'){renderHomeCards();pulseCard('news');}
-  }
-  function injectCrime(){
-    var p=CRIME_POOL[Math.floor(Math.random()*CRIME_POOL.length)];
-    CRIME.unshift({d:new Date(),type:p.type,loc:p.loc});
-    if(CRIME.length>40)CRIME.pop(); unread.OSINT++; renderNavBadges();
-    if(active==='HOME'){renderHomeCards();pulseCard('crime');}
-  }
-  function injectMesh(){
-    MESH.unshift({d:new Date(),cs:MESH_CS[Math.floor(Math.random()*MESH_CS.length)],
-      msg:MESH_MSG[Math.floor(Math.random()*MESH_MSG.length)]});
-    if(MESH.length>40)MESH.pop(); meshUnread++; unread.MESH=meshUnread; renderNavBadges();
-    if(active==='HOME'){renderHomeCards();pulseCard('mesh');}
-  }
-  /* mock inject timers removed — real data is driven by home/home-live.js via window.DBHome */
+  /* mock inject functions removed — real data is driven by home/home-live.js via window.DBHome */
 
   /* ---------------- content + nav switching ---------------- */
   function renderContent(id){
