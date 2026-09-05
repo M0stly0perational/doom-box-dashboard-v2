@@ -20,36 +20,46 @@ window.DBMap = window.DBMap || {};
      ============================================================ */
   var SPRITE = V1 + "/sprites/poi/";
   var POI = {
-    cell_towers: { label: "Cell towers", icons: ["tower"], layers: [{ kind: "icon", filter: ["==", ["geometry-type"], "Point"], icon: "tower" }] },
-    power: { label: "Power infra", icons: ["lightning"], layers: [
+    cell_towers: { label: "Cell towers", icons: ["tower"], format: "pmtiles", national: true, layers: [{ kind: "icon", filter: ["==", ["geometry-type"], "Point"], icon: "tower" }] },
+    power: { label: "Power infra", icons: ["lightning"], format: "pmtiles", national: true, layers: [
       { kind: "fill", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#fee090", "fill-opacity": 0.18, "fill-outline-color": "#fee090" } },
       { kind: "line", filter: ["==", ["geometry-type"], "LineString"], paint: { "line-color": "#fee090", "line-width": 1.4, "line-opacity": 0.85, "line-dasharray": [2, 1] } },
       { kind: "icon", filter: ["==", ["geometry-type"], "Point"], icon: "lightning" } ] },
-    railroads: { label: "Railroads", icons: [], layers: [{ kind: "line", filter: ["==", ["geometry-type"], "LineString"], paint: { "line-color": "#c8d0d6", "line-width": 1.6, "line-dasharray": [3, 2] } }] },
-    airports: { label: "Airports & helipads", icons: ["plane", "helipad"], layers: [
-      { kind: "fill", filter: ["all", ["==", ["geometry-type"], "Polygon"], ["==", ["get", "aeroway", ["get", "tags"]], "aerodrome"]], paint: { "fill-color": "#7eb8d6", "fill-opacity": 0.10, "fill-outline-color": "#7eb8d6" } },
-      { kind: "line", filter: ["all", ["==", ["geometry-type"], "LineString"], ["==", ["get", "aeroway", ["get", "tags"]], "runway"]], paint: { "line-color": "#f0f0f0", "line-width": 2 } },
-      { kind: "icon", filter: ["all", ["==", ["geometry-type"], "Point"], ["==", ["get", "aeroway", ["get", "tags"]], "helipad"]], icon: "helipad" },
-      { kind: "icon", filter: ["all", ["==", ["geometry-type"], "Point"], ["==", ["get", "aeroway", ["get", "tags"]], "aerodrome"]], icon: "plane" } ] },
-    military: { label: "Military", icons: [], layers: [{ kind: "fill", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#d73027", "fill-opacity": 0.18, "fill-outline-color": "#d73027" } }] },
-    hospitals: { label: "Hospitals", icons: ["cross"], layers: [
+    railroads: { label: "Railroads", icons: [], format: "pmtiles", national: true, layers: [{ kind: "line", filter: ["==", ["geometry-type"], "LineString"], paint: { "line-color": "#c8d0d6", "line-width": 1.6, "line-dasharray": [3, 2] } }] },
+    airports: { label: "Airports & helipads", icons: ["plane", "helipad"], format: "pmtiles", national: true, layers: [
+      // Filters swapped from nested tags.aeroway lookups to the top-level geom_kind field:
+      // vector-tile properties deliver "tags" as a JSON string (tippecanoe auto-stringifies
+      // nested objects), so ["get","aeroway",["get","tags"]] can't work here — it only ever
+      // worked against the old GeoJSON source, where tags was a live object. Polygon/
+      // LineString geometry in this category only ever comes from aerodrome/runway ways
+      // respectively, so those two no longer need an aeroway check at all; the Point bucket
+      // (helipad node vs. aerodrome centroid) is disambiguated via geom_kind instead.
+      // Known rare edge case: a helipad mapped as a closed way in OSM would be visually
+      // indistinguishable from an aerodrome under this scheme (accepted, not a functional
+      // break).
+      { kind: "fill", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#7eb8d6", "fill-opacity": 0.10, "fill-outline-color": "#7eb8d6" } },
+      { kind: "line", filter: ["==", ["geometry-type"], "LineString"], paint: { "line-color": "#f0f0f0", "line-width": 2 } },
+      { kind: "icon", filter: ["all", ["==", ["geometry-type"], "Point"], ["==", ["get", "geom_kind"], "point"]], icon: "helipad" },
+      { kind: "icon", filter: ["all", ["==", ["geometry-type"], "Point"], ["==", ["get", "geom_kind"], "polygon_centroid"]], icon: "plane" } ] },
+    military: { label: "Military", icons: [], format: "pmtiles", national: true, layers: [{ kind: "fill", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#d73027", "fill-opacity": 0.18, "fill-outline-color": "#d73027" } }] },
+    hospitals: { label: "Hospitals", icons: ["cross"], format: "pmtiles", national: true, layers: [
       { kind: "fill", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#d73027", "fill-opacity": 0.10, "fill-outline-color": "#d73027" } },
       { kind: "icon", filter: ["==", ["geometry-type"], "Point"], icon: "cross" } ] },
-    fire_stations: { label: "Fire stations", icons: ["flame"], layers: [
+    fire_stations: { label: "Fire stations", icons: ["flame"], format: "pmtiles", national: true, layers: [
       { kind: "fill", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#f46d43", "fill-opacity": 0.10, "fill-outline-color": "#f46d43" } },
       { kind: "icon", filter: ["==", ["geometry-type"], "Point"], icon: "flame" } ] },
-    police: { label: "Police", icons: ["shield"], layers: [
+    police: { label: "Police", icons: ["shield"], format: "pmtiles", national: true, layers: [
       { kind: "fill", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#4fa3d0", "fill-opacity": 0.10, "fill-outline-color": "#4fa3d0" } },
       { kind: "icon", filter: ["==", ["geometry-type"], "Point"], icon: "shield" } ] },
-    fuel: { label: "Fuel", icons: ["pump"], layers: [{ kind: "icon", filter: ["==", ["geometry-type"], "Point"], icon: "pump", minzoom: 12 }] },
-    water: { label: "Water treatment", icons: ["drop"], layers: [
+    fuel: { label: "Fuel", icons: ["pump"], format: "pmtiles", national: true, layers: [{ kind: "icon", filter: ["==", ["geometry-type"], "Point"], icon: "pump", minzoom: 12 }] },
+    water: { label: "Water treatment", icons: ["drop"], format: "pmtiles", national: true, layers: [
       { kind: "fill", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#6ad27a", "fill-opacity": 0.12, "fill-outline-color": "#6ad27a" } },
       { kind: "icon", filter: ["==", ["geometry-type"], "Point"], icon: "drop" } ] },
     flood_zones: { label: "FEMA flood zones", icons: [], format: "pmtiles", sourceLayer: "flood_zones", minzoom: 6, layers: [
       { kind: "fill", filter: null, sourceLayer: "flood_zones", paint: {
         "fill-color": ["match", ["get", "FLD_ZONE"], ["A", "AE", "AH", "AO", "AR", "A99"], "#4fa3d0", ["V", "VE"], "#8a4fbf", ["X", "D"], "#fbb03b", "#7eb8d6"],
         "fill-opacity": 0.32, "fill-outline-color": "#0b0f10" } }] },
-    bridges: { label: "Bridges", icons: [], layers: [{ kind: "line", filter: ["==", ["geometry-type"], "LineString"], paint: { "line-color": "#f0f0f0", "line-width": 3, "line-opacity": 0.9 } }] }
+    bridges: { label: "Bridges", icons: [], format: "pmtiles", national: true, layers: [{ kind: "line", filter: ["==", ["geometry-type"], "LineString"], paint: { "line-color": "#f0f0f0", "line-width": 3, "line-opacity": 0.9 } }] }
   };
   var POI_ORDER = ["cell_towers", "power", "railroads", "airports", "military", "hospitals", "fire_stations", "police", "fuel", "water", "flood_zones", "bridges"];
 
@@ -206,15 +216,31 @@ window.DBMap = window.DBMap || {};
   function loadPoi(cid) {
     var mp = map(); var cdef = POI[cid], st = poiState[cid];
     var dataBase = V1 + "/data/poi/" + regionId() + "/";
+    var nationalBase = V1 + "/data/poi/national/";
     return Promise.all((cdef.icons || []).map(registerIcon)).then(function () {
       var sourceId = "poi-" + cid, beforeId = poiInsertBefore();
       if (cdef.format === "pmtiles") {
-        var pmt = "pmtiles://" + window.location.origin + dataBase + cid + ".pmtiles";
+        // National-baseline categories (Phase 1) load one fixed archive regardless of
+        // active region — this is the tx-nm-snv 404 fix. flood_zones (FEMA, untouched)
+        // stays per-region via dataBase; unaffected since it has no cdef.national.
+        var pmt = cdef.national
+          ? "pmtiles://" + window.location.origin + nationalBase + "national-poi.pmtiles"
+          : "pmtiles://" + window.location.origin + dataBase + cid + ".pmtiles";
         if (!mp.getSource(sourceId)) mp.addSource(sourceId, { type: "vector", url: pmt });
         cdef.layers.forEach(function (rec, i) {
           var lid = "poi-" + cid + "-" + rec.kind + "-" + i;
           if (mp.getLayer(lid)) mp.removeLayer(lid);
           var layer = { id: lid, source: sourceId, type: rec.kind === "icon" ? "symbol" : rec.kind, "source-layer": rec.sourceLayer || cdef.sourceLayer || cid, layout: { visibility: "none" }, paint: rec.paint || {} };
+          if (rec.kind === "icon") {
+            // Icon layers need explicit icon/text layout — the geojson branch below already
+            // sets this; the pmtiles branch never did (latent gap, only ever exercised by
+            // flood_zones' fill-only layer until Phase 1 routed icon-bearing categories
+            // through here too).
+            layer.layout["icon-image"] = "poi-" + rec.icon; layer.layout["icon-size"] = 0.85; layer.layout["icon-allow-overlap"] = true;
+            layer.layout["text-field"] = ["coalesce", ["get", "name"], ""]; layer.layout["text-font"] = ["Noto Sans Medium"]; layer.layout["text-size"] = 11;
+            layer.layout["text-anchor"] = "top"; layer.layout["text-offset"] = [0, 1.0]; layer.layout["text-optional"] = true; layer.layout["text-allow-overlap"] = false;
+            layer.paint = { "text-color": "#f0f0f0", "text-halo-color": "#0b0f10", "text-halo-width": 1.4 };
+          }
           if (rec.filter) layer.filter = rec.filter;
           if (cdef.minzoom != null) layer.minzoom = cdef.minzoom;
           if (rec.minzoom != null) layer.minzoom = rec.minzoom;
