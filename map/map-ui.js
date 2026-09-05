@@ -45,16 +45,20 @@ window.DBMap = window.DBMap || {};
     // attach the persistent MapLibre map element
     M.ensureMap(wrap);
 
-    // resolve region (async) then refresh the region manager + readout label
+    // resolve region (async) then refresh the readout label. The old
+    // region-switcher bottom bar (buildRegion) is gone as of the MGRS
+    // fetcher UI — see map-mgrs-fetch.js — but the passive "REGION: X" text
+    // inside the cursor readout (buildReadout, a separate, non-interactive
+    // element) stays as-is; it was never part of the tab being replaced.
     M.resolveRegion().then(function () {
-      buildRegion();
       var reg = refs.ro && refs.ro.querySelector(".reg");
       if (reg) reg.textContent = "REGION: " + ((S.region && (S.region.name || S.region.region_id)) || "—");
     });
 
     buildSearch(); buildToolbar(); buildLayersBtn(); buildLayersPanel();
-    buildAnnoPanel(); buildRegion(); buildContext(); buildReadout(); buildInstruct(); buildToast(); buildExitFull();
+    buildAnnoPanel(); buildContext(); buildReadout(); buildInstruct(); buildToast(); buildExitFull();
     if (M.hires && M.hires.mount) M.hires.mount(wrap);
+    if (M.mgrsFetch && M.mgrsFetch.mount) M.mgrsFetch.mount(wrap);
 
     U.highlightTool(T.current || "pan");
     U.refreshAnnos(); U.updateLayerCount();
@@ -299,36 +303,6 @@ window.DBMap = window.DBMap || {};
       });
     }
   };
-
-  /* ============================================================
-     REGION MANAGER  (/api/maps/*)
-     ============================================================ */
-  function buildRegion() {
-    if (refs.region) { refs.region.remove(); }
-    var p = el("div", "dbm-panel dbm-region");
-    var r = S.region || {};
-    var sizeMB = r.size_bytes ? Math.round(r.size_bytes / 1048576) : 0;
-    var bar = el("div", "rg-bar");
-    bar.innerHTML = '<span class="chev">▴</span><span class="rg-name">REGION: ' + (r.name || r.region_id || "—") + "</span>" +
-      '<span class="rg-meta">' + (r.bbox ? bboxLabel(r.bbox) : "") + " · " + sizeMB + " MB · z" + (r.minzoom || 0) + "–" + (r.maxzoom || 15) + "</span>";
-    p.appendChild(bar);
-    var body = el("div", "rg-body"); var inner = el("div", "rg-inner");
-    (S.regions || []).forEach(function (rg) { inner.appendChild(regionRow(rg)); });
-    body.appendChild(inner); p.appendChild(body); wrap.appendChild(p);
-    refs.region = p; refs.regionInner = inner;
-    bar.addEventListener("click", function () { p.classList.toggle("open"); });
-  }
-  function bboxLabel(b) { return "[" + b.map(function (n) { return (+n).toFixed(1); }).join(", ") + "]"; }
-  function regionRow(rg) {
-    var actv = rg.region_id === S.activeId;
-    var r = el("div", "dbm-rgrow" + (actv ? " active" : ""));
-    var sizeMB = rg.size_bytes ? Math.round(rg.size_bytes / 1048576) : 0;
-    r.innerHTML = '<span class="n">' + (actv ? "▸ " : "") + (rg.name || rg.region_id) + '</span><span class="s">' + sizeMB + " MB · z" + (rg.minzoom || 0) + "–" + (rg.maxzoom || 15) + "</span>";
-    var sw = el("button", null, actv ? "ACTIVE" : "SWITCH");
-    if (!actv) sw.addEventListener("click", function (e) { e.stopPropagation(); U.toast("SWITCHING TO " + (rg.name || rg.region_id) + " …"); M.swapRegion(rg.region_id); });
-    r.appendChild(sw); return r;
-  }
-  U.updateRegionMeta = function () { /* region bar rebuilt by buildRegion after resolve */ };
 
   /* ============================================================
      CONTEXT MENU
