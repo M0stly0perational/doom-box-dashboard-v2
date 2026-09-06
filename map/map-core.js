@@ -56,6 +56,7 @@ window.DBMap = window.DBMap || {};
     usImagery: localStorage.getItem("db_map_us_imagery") !== "0",   // USGS CONUS imagery underlay z7-9 (Tier 2, above world-bm) — default ON
     regionDfw: localStorage.getItem("db_map_region_dfw") !== "0",     // NAIP z10-16 regional imagery — DFW metro (Tier 3, above us-z9) — default ON
     regionVegas: localStorage.getItem("db_map_region_vegas") !== "0", // NAIP z10-16 regional imagery — Las Vegas metro (Tier 3, above us-z9) — default ON
+    vectorLinesLabels: localStorage.getItem("db_map_vector_lines_labels") !== "0", // vector road lines + place labels on/off, independent of imagery mode — default ON
     entity: {
       tak:  localStorage.getItem("db_map_layer_tak")  === "1",
       adsb: localStorage.getItem("db_map_layer_adsb") === "1",
@@ -249,16 +250,46 @@ window.DBMap = window.DBMap || {};
   var SAT_USGS = ORIGIN + "/proxy/tiles/usgs/{z}/{y}/{x}";
   var SAT_ESRI = ORIGIN + "/proxy/tiles/esri/{z}/{y}/{x}";
 
-  M._fillIds = []; M._symbolIds = []; M._allVecIds = [];
+  M._fillIds = []; M._symbolIds = []; M._allVecIds = []; M._polygonFillIds = []; M._lineIds = [];
   function buildStyle(region) {
     var PMT = "pmtiles://" + ORIGIN + region.serve_url;
     var proto = protomaps_themes_base.default("protomaps", "dark");
     var bgIdx = proto.findIndex(function (l) { return l.type === "background"; });
     var bg   = bgIdx >= 0 ? proto.slice(0, bgIdx + 1) : [];
     var rest = bgIdx >= 0 ? proto.slice(bgIdx + 1)    : proto;
+    // Three-way split so the vector layers can be shown as a transparent overlay
+    // (lines + symbols, imagery visible through the gaps) instead of only the old
+    // fill-vs-symbol binary, which lumped roads/boundaries in with opaque polygon
+    // fills and hid them too whenever imagery was underneath (Issue 1 fix).
+    M._polygonFillIds = rest.filter(function (l) { return l.type === "fill"; }).map(function (l) { return l.id; });
+    M._lineIds   = rest.filter(function (l) { return l.type === "line"; }).map(function (l) { return l.id; });
     M._fillIds   = rest.filter(function (l) { return l.type !== "symbol"; }).map(function (l) { return l.id; });
     M._symbolIds = rest.filter(function (l) { return l.type === "symbol"; }).map(function (l) { return l.id; });
     M._allVecIds = rest.map(function (l) { return l.id; });
+    // Road lines only (not water/boundaries) get the imagery-hybrid restyle below —
+    // those weren't reported as a problem and remapping their hues wasn't asked for.
+    M._roadLineIds = M._lineIds.filter(function (id) { return id.indexOf("roads_") === 0; });
+    // Snapshot the dark theme's own paint values so applyBasemap() can cleanly
+    // restore them when imagery is toggled off (plain-vector case, unchanged look).
+    var byId = {};
+    rest.forEach(function (l) { byId[l.id] = l; });
+    M._origLinePaint = {};
+    M._roadLineIds.forEach(function (id) {
+      var p = (byId[id] && byId[id].paint) || {};
+      M._origLinePaint[id] = {
+        "line-color":   p["line-color"]   !== undefined ? p["line-color"]   : "#000000",
+        "line-opacity": p["line-opacity"] !== undefined ? p["line-opacity"] : 1
+      };
+    });
+    M._origSymbolPaint = {};
+    M._symbolIds.forEach(function (id) {
+      var p = (byId[id] && byId[id].paint) || {};
+      M._origSymbolPaint[id] = {
+        "text-color":      p["text-color"]      !== undefined ? p["text-color"]      : "#000000",
+        "text-halo-color": p["text-halo-color"] !== undefined ? p["text-halo-color"] : "#ffffff",
+        "text-halo-width": p["text-halo-width"] !== undefined ? p["text-halo-width"] : 0
+      };
+    });
     return {
       version: 8,
       glyphs: ORIGIN + V1 + "/glyphs/{fontstack}/{range}.pbf",
@@ -400,6 +431,45 @@ window.DBMap = window.DBMap || {};
   // time it's selected. Local file, served by the NVMe httpStatic dual-mount
   // (~/media-local -> /media/) — no proxy needed, unlike the
   // live satellite tiles, since this is fully local data.
+  // Imagery-overlay hybrid line/label restyle — the dark-theme road lines (near-
+  // black casings/fills) and dark text-halos read as a heavy black scribble over
+  // bright satellite/NAIP imagery. When any imagery is active, roads get a light,
+  // semi-transparent overlay treatment and labels get a light-text/dark-halo
+  // silhouette (legible over both bright and dark imagery patches). Restores the
+  // theme's own original paint values when imagery goes off. Paint-only, driven
+  // by the same anyImagery flag as the fill-hiding fix — zero region-logic touch.
+  var HYBRID_LINE_COLOR      = "#F2EFE6";
+  var HYBRID_LINE_OPACITY    = 0.55;
+  var HYBRID_TEXT_COLOR      = "#FFFFFF";
+  var HYBRID_TEXT_HALO_COLOR = "#0B0F10";
+  var HYBRID_TEXT_HALO_WIDTH = 1.4;
+  function applyHybridLineLabelStyle(anyImagery) {
+    if (!_map) return;
+    M._roadLineIds.forEach(function (id) {
+      if (!_map.getLayer(id)) return;
+      var orig = M._origLinePaint[id];
+      if (anyImagery) {
+        _map.setPaintProperty(id, "line-color", HYBRID_LINE_COLOR);
+        _map.setPaintProperty(id, "line-opacity", HYBRID_LINE_OPACITY);
+      } else if (orig) {
+        _map.setPaintProperty(id, "line-color", orig["line-color"]);
+        _map.setPaintProperty(id, "line-opacity", orig["line-opacity"]);
+      }
+    });
+    M._symbolIds.forEach(function (id) {
+      if (!_map.getLayer(id)) return;
+      var orig = M._origSymbolPaint[id];
+      if (anyImagery) {
+        _map.setPaintProperty(id, "text-color", HYBRID_TEXT_COLOR);
+        _map.setPaintProperty(id, "text-halo-color", HYBRID_TEXT_HALO_COLOR);
+        _map.setPaintProperty(id, "text-halo-width", HYBRID_TEXT_HALO_WIDTH);
+      } else if (orig) {
+        _map.setPaintProperty(id, "text-color", orig["text-color"]);
+        _map.setPaintProperty(id, "text-halo-color", orig["text-halo-color"]);
+        _map.setPaintProperty(id, "text-halo-width", orig["text-halo-width"]);
+      }
+    });
+  }
   var _hiresLayers = {};   // zip -> true once its source/layer exist
   function ensureHiresLayer(zip) {
     if (!_map || _hiresLayers[zip]) return;
@@ -414,12 +484,19 @@ window.DBMap = window.DBMap || {};
     var sat = S.basemap === "satellite";
     var hires = S.basemap === "hires" && S.hiresZip;
     if (hires) ensureHiresLayer(S.hiresZip);
-    if (sat || hires) {
-      M._fillIds.forEach(function (id) { if (_map.getLayer(id)) _map.setLayoutProperty(id, "visibility", "none"); });
-      M._symbolIds.forEach(function (id) { if (_map.getLayer(id)) _map.setLayoutProperty(id, "visibility", "visible"); });
-    } else {
-      M._allVecIds.forEach(function (id) { if (_map.getLayer(id)) _map.setLayoutProperty(id, "visibility", "visible"); });
-    }
+    // Any imagery underlay active (world/US/DFW/Vegas, plus the existing sat/hires
+    // modes) means imagery is meant to be visible as a base — hide only the opaque
+    // polygon fills so it shows through (Issue 1 fix). Plain vector mode with no
+    // imagery on keeps the fills fully opaque, unchanged from the original look.
+    var anyImagery = sat || hires || S.worldBm || S.usImagery || S.regionDfw || S.regionVegas;
+    M._polygonFillIds.forEach(function (id) { if (_map.getLayer(id)) _map.setLayoutProperty(id, "visibility", anyImagery ? "none" : "visible"); });
+    // Vector road lines + place labels: shown only when the "Vector roads & labels"
+    // toggle is on, independent of imagery mode. When shown, applyHybridLineLabelStyle
+    // below still picks light/halo styling over imagery vs. dark styling otherwise —
+    // this toggle only controls visibility, not which paint variant applies.
+    M._lineIds.forEach(function (id) { if (_map.getLayer(id)) _map.setLayoutProperty(id, "visibility", S.vectorLinesLabels ? "visible" : "none"); });
+    M._symbolIds.forEach(function (id) { if (_map.getLayer(id)) _map.setLayoutProperty(id, "visibility", S.vectorLinesLabels ? "visible" : "none"); });
+    applyHybridLineLabelStyle(anyImagery);
     _map.setLayoutProperty("sat-usgs-tiles", "visibility", sat && S.satSource === "usgs" ? "visible" : "none");
     _map.setLayoutProperty("sat-esri-tiles", "visibility", sat && S.satSource === "esri" ? "visible" : "none");
     // World backdrop underlay — driven purely by its own toggle, independent of basemap mode.
@@ -454,6 +531,14 @@ window.DBMap = window.DBMap || {};
   M.setUsImagery = function (on) {
     S.usImagery = !!on;
     localStorage.setItem("db_map_us_imagery", on ? "1" : "0");
+    applyBasemap();
+  };
+  // Toggle vector road lines + place labels on/off, independent of imagery mode
+  // (default ON, persisted). Polygon fills are unaffected — still driven solely
+  // by anyImagery in applyBasemap().
+  M.setVectorLinesLabels = function (on) {
+    S.vectorLinesLabels = !!on;
+    localStorage.setItem("db_map_vector_lines_labels", on ? "1" : "0");
     applyBasemap();
   };
   // Toggle the DFW regional NAIP imagery underlay (Tier 3, z10-16, default ON, persisted).

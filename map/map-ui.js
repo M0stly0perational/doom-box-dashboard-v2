@@ -176,6 +176,7 @@ window.DBMap = window.DBMap || {};
     s1.body.appendChild(toggleRow("US imagery", S.usImagery, M.setUsImagery));
     s1.body.appendChild(toggleRow("DFW hi-res imagery (z16)", S.regionDfw, M.setRegionDfw));
     s1.body.appendChild(toggleRow("Vegas hi-res imagery (z16)", S.regionVegas, M.setRegionVegas));
+    s1.body.appendChild(toggleRow("Vector roads & labels", S.vectorLinesLabels, M.setVectorLinesLabels));
     body.appendChild(s1.root);
 
     // TACTICAL OVERLAYS (real)
