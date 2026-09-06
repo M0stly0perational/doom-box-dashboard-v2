@@ -103,13 +103,12 @@ window.DBMap = window.DBMap || {};
   /* ============================================================
      SYMBOLS — MIL-STD-2525 / APP-6 via milsymbol  (port of V1 symbols.js)
      ============================================================ */
+  // ADS-B aircraft deliberately do NOT use MIL-STD-2525 symbology — see
+  // makeAdsbEl() below, which renders a plain amber plane glyph instead.
   var SIDC = {
-    self:            "SFGPUH----***",  // Friend Ground HQ
-    tak:             "SFGPU-----***",  // Friend Ground Unit (generic)
-    mesh:            "SFGPESR---***",  // Friend Ground Equip — Sensor Radar
-    adsb_unknown:    "SUAP------***",  // Unknown Air
-    adsb_military:   "SHAPMF----***",  // Hostile Air — Military Fixed-Wing
-    adsb_commercial: "SNAPCF----***"   // Neutral Air — Civil Fixed-Wing
+    self: "SFGPUH----***",  // Friend Ground HQ
+    tak:  "SFGPU-----***",  // Friend Ground Unit (generic)
+    mesh: "SFGPESR---***"   // Friend Ground Equip — Sensor Radar
   };
   var SYM = M.symbols = {
     ok: (typeof window.ms !== "undefined" && typeof ms.Symbol === "function"),
@@ -606,15 +605,11 @@ window.DBMap = window.DBMap || {};
     if (r) return r;
     return { el: classicEl("width:14px;height:14px;background:#80C8FF;border:2px solid #0A0E12;border-radius:50%;box-shadow:0 0 6px rgba(128,200,255,.85);cursor:pointer;"), offset: [0, 0] };
   }
-  function adsbKind(a) {
-    var hex = (a.hex || "").toLowerCase();
-    if (hex.indexOf("ae") === 0 || a.military) return "adsb_military";
-    if (a.callsign && a.callsign.trim()) return "adsb_commercial";
-    return "adsb_unknown";
-  }
+  // ADS-B aircraft — classic amber plane glyph rotated by track (restored; no
+  // MIL-STD-2525 for aircraft — deliberate, not doctrinal military symbology).
+  // Same shape/color for every aircraft, matching the original 2026-05-08
+  // implementation — no kind-based color coding.
   function makeAdsbEl(a) {
-    var r = SYM.render(SYM.sidcFor(adsbKind(a)), { size: 32 });
-    if (r) { var inner = r.el.querySelector("svg"); if (inner) inner.style.transition = "transform 200ms linear"; return { el: r.el, svg: inner, offset: r.offset }; }
     var el = classicEl("width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;");
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("width", "22"); svg.setAttribute("height", "22");
